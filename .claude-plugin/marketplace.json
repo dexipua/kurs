@@ -1,0 +1,18 @@
+{
+  "name": "kurs",
+  "owner": {
+    "name": "Artem Moseichenko",
+    "url": "https://github.com/dexipua"
+  },
+  "metadata": {
+    "description": "«Мій курс» — трекер розвитку з ігровим шаром і нагадуваннями від Claude",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "kurs",
+      "description": "Особистий трекер звичок, задач і цілей з рівнями, рангами, квестами й нагадуваннями від Claude на телефон.",
+      "source": "./"
+    }
+  ]
+}

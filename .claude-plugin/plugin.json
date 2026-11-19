@@ -1,0 +1,11 @@
+{
+  "name": "kurs",
+  "version": "1.0.0",
+  "description": "«Мій курс»: особистий трекер звичок, задач і цілей з ігровим шаром (рівні, ранги, квести) і нагадуваннями від Claude на телефон.",
+  "author": {
+    "name": "Artem Moseichenko",
+    "url": "https://github.com/dexipua"
+  },
+  "homepage": "https://github.com/dexipua/kurs",
+  "license": "MIT"
+}

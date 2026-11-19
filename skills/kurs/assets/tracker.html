@@ -1,0 +1,669 @@
+<title>Мій курс</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* Layout: one phone-first column, a bearing-style header, bottom tab bar like an instrument panel */
+  :root {
+    --bg: #EDF1F2; --surface: #FFFFFF; --ink: #13263A; --muted: #5A6B7B; --line: #D5DEE2;
+    --accent: #1D6F80; --accent-ink: #FFFFFF; --brass: #B7841B; --ok: #2F7D4F; --warn: #B4471F; --soft: #E3ECEE;
+    --display: "Unbounded", "Segoe UI", system-ui, sans-serif;
+    --body: "Onest", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #0F1820; --surface: #16222C; --ink: #E4ECF0; --muted: #93A4B1; --line: #263744;
+    --accent: #4DB3C4; --accent-ink: #08151B; --brass: #E0AE48; --ok: #5CC28A; --warn: #F08A62; --soft: #1C2B36; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #0F1820; --surface: #16222C; --ink: #E4ECF0; --muted: #93A4B1; --line: #263744;
+    --accent: #4DB3C4; --accent-ink: #08151B; --brass: #E0AE48; --ok: #5CC28A; --warn: #F08A62; --soft: #1C2B36; color-scheme: dark }
+
+  html { -webkit-text-size-adjust: 100%; }
+  body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .wrap { max-width: 680px; margin: 0 auto; display: grid; gap: 18px; padding-top: 18px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  h1 { font: 700 22px/1.15 var(--display); letter-spacing: -0.01em; }
+  h2 { font: 600 15px/1.3 var(--display); letter-spacing: 0.01em; }
+  .eyebrow { font: 500 12px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+  header.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+  .streak { display: flex; align-items: center; gap: 10px; }
+  .streak b { font: 700 28px/1 var(--display); color: var(--brass); }
+  .streak span { font-size: 13px; color: var(--muted); line-height: 1.2; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+
+  .gauge { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+  .ring { width: 84px; height: 84px; }
+  .ring circle { fill: none; stroke-width: 9; }
+  .ring .bgc { stroke: var(--soft); }
+  .ring .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .4s ease; }
+  .ring text { fill: var(--ink); font: 700 18px var(--display); }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .wd { display: grid; gap: 4px; justify-items: center; font: 500 11px var(--mono); color: var(--muted); }
+  .wd i { display: block; width: 100%; height: 34px; border-radius: 6px; background: var(--soft); position: relative; overflow: hidden; }
+  .wd i em { position: absolute; inset: auto 0 0 0; background: var(--accent); opacity: .85; }
+  .wd.today { color: var(--ink); font-weight: 700; }
+  .wd.good i { outline: 2px solid var(--brass); outline-offset: -2px; }
+
+  .list { display: grid; gap: 2px; }
+  .row { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--line); min-width: 0; }
+  .row:first-child { border-top: 0; }
+  .row .t { min-width: 0; overflow-wrap: anywhere; }
+  .row .meta { font-size: 13px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .row.done .t > div:first-child { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1px; }
+  .check { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--line); background: transparent; display: grid; place-items: center; padding: 0; }
+  .check.on { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+  .check svg { width: 16px; height: 16px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+  .chip { font: 500 12px/1 var(--mono); padding: 4px 7px; border-radius: 6px; background: var(--soft); color: var(--muted); white-space: nowrap; }
+  .chip.bad { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+  .chip.hot { background: color-mix(in srgb, var(--brass) 18%, transparent); color: var(--brass); }
+  .icon-btn { background: none; border: 0; color: var(--muted); padding: 6px; border-radius: 8px; font-size: 14px; }
+  .icon-btn:hover { color: var(--ink); background: var(--soft); }
+
+  .btn { border: 1.5px solid var(--ink); background: transparent; border-radius: 10px; padding: 9px 14px; font-weight: 600; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { border-color: var(--line); }
+  .btn.danger { border-color: var(--warn); color: var(--warn); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  form.inline { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .field { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type=text], input[type=date], input[type=number], select, textarea {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 9px 10px; width: 100%; min-width: 0; color: var(--ink); }
+  textarea { resize: vertical; min-height: 70px; }
+
+  .coach { border-left: 3px solid var(--brass); padding: 4px 0 4px 12px; white-space: pre-wrap; }
+  .coach small { display: block; color: var(--muted); font: 500 12px var(--mono); margin-bottom: 4px; }
+  .bar { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+  .steps { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .steps li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; }
+  .steps .check { width: 22px; height: 22px; border-radius: 6px; }
+  .steps li.done span { color: var(--muted); text-decoration: line-through; }
+  .notice { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  .exam { background: color-mix(in srgb, var(--brass) 14%, var(--surface)); border-color: var(--brass); }
+  details > summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+
+  nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line);
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  nav.tabs a { text-decoration: none; color: var(--muted); display: grid; justify-items: center; gap: 2px; font-size: 11.5px; padding: 6px 2px; border-radius: 10px; }
+  nav.tabs a svg { width: 22px; height: 22px; }
+  nav.tabs a[aria-current="page"] { color: var(--accent); background: var(--soft); font-weight: 600; }
+
+  dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 18px; width: min(520px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgb(8 16 22 / .45); }
+  dialog form { display: grid; gap: 12px; }
+  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg);
+    padding: 9px 14px; border-radius: 10px; font-size: 14px; z-index: 9; max-width: calc(100vw - 32px); }
+  /* Game layer: a status window with rank, level, XP and stats */
+  .status { border: 1.5px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
+  .st-head { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
+  .rank { width: 58px; height: 58px; border-radius: 12px; display: grid; place-items: center; font: 700 28px var(--display);
+    color: var(--accent-ink); background: var(--accent); }
+  .rank.S, .rank.A { background: var(--brass); }
+  .lvl { font: 700 18px var(--display); }
+  .xpbar { height: 10px; background: var(--soft); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+  .xpbar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--brass)); border-radius: 99px; transition: width .5s ease; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .stat { background: var(--soft); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+  .stat b { font: 700 18px var(--display); }
+  .stat span { font: 500 11px var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .quest-done { color: var(--ok); font: 600 13px var(--mono); }
+  .penalty { border-color: var(--warn); background: color-mix(in srgb, var(--warn) 8%, var(--surface)); }
+  .ach { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ach div { border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: grid; gap: 2px; }
+  .ach div b { font-size: 14px; }
+  .ach div small { color: var(--muted); font-size: 12px; }
+  .ach div.locked { opacity: .45; }
+  .ach div.got { border-color: var(--brass); }
+  .levelup { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgb(8 16 22 / .55); padding: 24px; }
+  .levelup div { background: var(--surface); border: 2px solid var(--brass); border-radius: 16px; padding: 22px 26px; text-align: center; display: grid; gap: 6px; max-width: 320px; }
+  .levelup b { font: 700 13px var(--mono); letter-spacing: .14em; color: var(--brass); }
+  .levelup strong { font: 700 34px var(--display); }
+  @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow" id="dateLine">Мій курс</div>
+      <h1 id="viewTitle">Сьогодні</h1>
+    </div>
+    <div class="streak" title="Днів поспіль, коли виконано план дня">
+      <b class="num" id="streakNum">0</b><span>днів<br>на курсі</span>
+    </div>
+  </header>
+  <div id="status" class="notice">Завантажую твій курс…</div>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" aria-label="Розділи"><div>
+  <a href="#today" data-r="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Сьогодні</a>
+  <a href="#tasks" data-r="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</a>
+  <a href="#habits" data-r="habits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Звички</a>
+  <a href="#goals" data-r="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Цілі</a>
+  <a href="#setup" data-r="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Налаштування</a>
+</div></nav>
+
+<dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+
+<script>
+const DEFAULT_AREAS = [
+  { id: "career", name: "Кар'єра", color: "#3A6EA5" }, { id: "study", name: "Навчання", color: "#7A5CC4" },
+  { id: "books", name: "Книги", color: "#B7841B" }, { id: "body", name: "Тіло", color: "#2F7D4F" },
+  { id: "mind", name: "Розум", color: "#1D6F80" }, { id: "life", name: "Життя", color: "#B4471F" },
+];
+const DEFAULT_SETTINGS = { name: "", about: "", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
+  reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
+const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, settings: null, loaded: new Set(), readOnly: false };
+let db = null, sample = null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const TODAY = () => ymd(new Date());
+const weekStart = d => addDays(d, -((d.getDay() + 6) % 7));
+const set = () => ({ ...DEFAULT_SETTINGS, ...(S.settings || {}) });
+const areas = () => (set().areas && set().areas.length ? set().areas : DEFAULT_AREAS);
+const area = id => areas().find(a => a.id === id) || { id, name: id || "—", color: "#888" };
+const fmtDate = s => { if (!s) return ""; const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("uk-UA", { day: "numeric", month: "short" }); };
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>';
+
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 2600); }
+
+// One write at a time per document.
+const queues = {};
+function write(path, fn) {
+  if (S.readOnly) { toast("Ця сторінка зараз лише для перегляду"); return Promise.resolve(); }
+  queues[path] = (queues[path] || Promise.resolve()).then(fn).catch(e => {
+    if (e && e.code === "invalid_argument") { S.readOnly = true; toast("Зберегти не вдалося: немає права на запис"); }
+    else if (e && e.code === "quota_exceeded") toast("Сховище заповнене: видали старі задачі");
+    else toast("Не зберіглося. Перевір з'єднання й спробуй ще раз");
+  });
+  return queues[path];
+}
+
+// ---------- derived numbers ----------
+const activeHabits = () => S.habits.filter(h => h.active !== false && (!set().examMode || h.keepInExams || h.area === "study"))
+  .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+const dailyHabits = () => activeHabits().filter(h => h.freq !== "weekly");
+const weeklyHabits = () => activeHabits().filter(h => h.freq === "weekly");
+const doneOn = (date, id) => !!(S.days[date] && S.days[date].done && S.days[date].done[id]);
+function dayRate(date) {
+  const hs = dailyHabits(); if (!hs.length) return 0;
+  return hs.filter(h => doneOn(date, h.id)).length / hs.length;
+}
+const isGood = date => dailyHabits().length > 0 && dayRate(date) * 100 >= set().threshold;
+function streak() {
+  let n = 0, d = new Date();
+  if (!isGood(ymd(d))) d = addDays(d, -1); // today still counts as open
+  for (let i = 0; i < 400 && isGood(ymd(d)); i++) { n++; d = addDays(d, -1); }
+  return n;
+}
+function weekCount(id) {
+  const ws = weekStart(new Date()); let c = 0;
+  for (let i = 0; i < 7; i++) if (doneOn(ymd(addDays(ws, i)), id)) c++;
+  return c;
+}
+function missedDaysInRow() {
+  let n = 0, d = addDays(new Date(), -1);
+  for (let i = 0; i < 14 && dailyHabits().length && dayRate(ymd(d)) === 0; i++) { n++; d = addDays(d, -1); }
+  return n;
+}
+const openTasks = () => S.tasks.filter(t => !t.done);
+const taskSort = (a, b) => (a.due || "9999") < (b.due || "9999") ? -1 : (a.due || "9999") > (b.due || "9999") ? 1 : (a.priority === "high" ? -1 : 1);
+// In exam mode the Today view shows study tasks only, matching the reminders.
+const focusTasks = () => openTasks().filter(t => !set().examMode || t.area === "study");
+const todayTasks = () => focusTasks().filter(t => t.due && t.due <= TODAY()).sort(taskSort);
+const goalProgress = g => { const s = g.steps || []; return s.length ? Math.round(100 * s.filter(x => x.done).length / s.length) : 0; };
+
+// ---------- game layer: everything is derived from what is already stored ----------
+const XP = { habit: h => 10 + Math.round((h.minutes || 0) / 3), quest: 30, penalty: 25, task: t => t.priority === "high" ? 40 : 20, step: 50 };
+const STAT_NAMES = { career: "Майстерність", study: "Інтелект", books: "Мудрість", body: "Сила", mind: "Фокус", life: "Харизма" };
+const rankOf = l => l >= 55 ? "S" : l >= 35 ? "A" : l >= 20 ? "B" : l >= 10 ? "C" : l >= 5 ? "D" : "E";
+function game() {
+  const byArea = {}, hm = Object.fromEntries(S.habits.map(h => [h.id, h]));
+  let total = 0, tasksDone = 0, goalsDone = 0;
+  const add = (a, x) => { if (a) byArea[a] = (byArea[a] || 0) + x; total += x; };
+  for (const [date, d] of Object.entries(S.days)) {
+    for (const id of Object.keys(d.done || {})) {
+      if (id === "penalty") add("body", XP.penalty); else if (hm[id]) add(hm[id].area, XP.habit(hm[id]));
+    }
+    if (isGood(date)) add(null, XP.quest);
+  }
+  for (const t of S.tasks) if (t.done) { add(t.area, XP.task(t)); tasksDone++; }
+  for (const g of S.goals) { for (const s of g.steps || []) if (s.done) add(g.area, XP.step); if ((g.steps || []).length && goalProgress(g) === 100) goalsDone++; }
+  let lvl = 1, need = 100, into = total;
+  while (into >= need) { into -= need; lvl++; need = 100 * lvl; }
+  return { total, byArea, lvl, into, need, rank: rankOf(lvl), tasksDone, goalsDone };
+}
+function maxStreak() {
+  const dates = Object.keys(S.days).sort(); if (!dates.length) return 0;
+  let best = 0, cur = 0, d = new Date(dates[0] + "T12:00:00");
+  for (let i = 0; i < 800 && ymd(d) <= TODAY(); i++) { cur = isGood(ymd(d)) ? cur + 1 : 0; best = Math.max(best, cur); d = addDays(d, 1); }
+  return best;
+}
+// A missed daily quest yesterday opens a short bonus quest today (never in exam mode, never on the first day).
+function penaltyToday() {
+  const y = ymd(addDays(new Date(), -1)), first = Object.keys(S.days).sort()[0];
+  return !set().examMode && dailyHabits().length > 0 && first && first <= y && !isGood(y);
+}
+function achievements(g) {
+  const ms = maxStreak();
+  return [
+    ["Перший квест", "Виконати щоденний квест", ms >= 1], ["Три дні", "3 дні поспіль", ms >= 3],
+    ["Тиждень дисципліни", "7 днів поспіль", ms >= 7], ["Місяць без зупинок", "30 днів поспіль", ms >= 30],
+    ["Ранг D", "Досягти 5 рівня", g.lvl >= 5], ["Ранг C", "Досягти 10 рівня", g.lvl >= 10], ["Ранг B", "Досягти 20 рівня", g.lvl >= 20],
+    ["Десять справ", "Закрити 10 задач", g.tasksDone >= 10], ["Ціль досягнута", "Виконати всі кроки цілі", g.goalsDone >= 1],
+    ["Книжковий черв'як", "500 досвіду в «Книгах»", (g.byArea.books || 0) >= 500], ["Залізо", "500 досвіду в «Тілі»", (g.byArea.body || 0) >= 500],
+    ["Гросмейстер у зародку", "300 досвіду у «Фокусі»", (g.byArea.mind || 0) >= 300],
+  ];
+}
+function statusPanel() {
+  const g = game();
+  const stats = areas().map(a => ({ n: STAT_NAMES[a.id] || a.name, v: 1 + Math.floor((g.byArea[a.id] || 0) / 60) }));
+  return `<section class="panel status" aria-label="Статус">
+    <div class="st-head"><div class="rank ${g.rank}" title="Ранг">${g.rank}</div>
+      <div><div class="eyebrow">Статус · ранг ${g.rank}</div><div class="lvl">Рівень ${g.lvl}</div>
+      <div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="${g.need}" aria-valuenow="${g.into}"><span style="width:${Math.round(100 * g.into / g.need)}%"></span></div>
+      <div class="meta num" style="margin-top:4px">${g.into} / ${g.need} досвіду до ${g.lvl + 1} рівня · всього ${g.total}</div></div></div>
+    <div class="stats">${stats.map(s => `<div class="stat"><span>${esc(s.n)}</span><b class="num">${s.v}</b></div>`).join("")}</div>
+  </section>`;
+}
+let shownLevel = null;
+function checkLevelUp() {
+  if (!["habits", "tasks", "goals", "days"].every(n => S.loaded.has(n))) return;
+  const l = game().lvl;
+  if (shownLevel === null) { try { shownLevel = Number(localStorage.getItem("kurs.lvl")) || l; } catch { shownLevel = l; } }
+  if (l > shownLevel) {
+    const o = document.createElement("div"); o.className = "levelup"; o.setAttribute("role", "status");
+    o.innerHTML = `<div><b>РІВЕНЬ ПІДВИЩЕНО</b><strong class="num">${shownLevel} → ${l}</strong><span class="muted">Ранг ${rankOf(l)}. Так тримати.</span></div>`;
+    o.onclick = () => o.remove(); document.body.append(o); setTimeout(() => o.remove(), 3500);
+  }
+  shownLevel = l;
+  try { localStorage.setItem("kurs.lvl", String(l)); } catch {}
+}
+
+// ---------- actions ----------
+function toggleHabit(id, date = TODAY()) {
+  const day = S.days[date] || { date, done: {} };
+  const done = { ...(day.done || {}) };
+  if (done[id]) delete done[id]; else {
+    done[id] = true;
+    const h = S.habits.find(x => x.id === id);
+    toast(id === "penalty" ? `+${XP.penalty} досвіду · Сила` : h ? `+${XP.habit(h)} досвіду · ${STAT_NAMES[h.area] || area(h.area).name}` : "Виконано");
+  }
+  S.days = { ...S.days, [date]: { ...day, date, done } };
+  render();
+  write("days/" + date, () => db.doc("days/" + date).set({ date, done }));
+}
+function toggleTask(t) {
+  const done = !t.done;
+  t.done = done; render();
+  if (done) toast(`+${XP.task(t)} досвіду · ${STAT_NAMES[t.area] || area(t.area).name}`);
+  write("tasks/" + t.id, () => db.doc("tasks/" + t.id).update({ done, doneAt: done ? new Date().toISOString() : null }));
+}
+function toggleStep(g, i) {
+  const steps = (g.steps || []).map((s, j) => j === i ? { ...s, done: !s.done } : s);
+  g.steps = steps; render();
+  write("goals/" + g.id, () => db.doc("goals/" + g.id).update({ steps }));
+}
+function saveSettings(patch) {
+  const next = { ...set(), ...patch };
+  S.settings = next; render();
+  write("settings/main", () => db.doc("settings/main").set(next));
+}
+
+// ---------- rendering ----------
+const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", setup: "Налаштування" };
+const route = () => (TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "today");
+
+function areaChip(id) { const a = area(id); return `<span class="meta"><span class="dot" style="background:${esc(a.color)}"></span>${esc(a.name)}</span>`; }
+function dueChip(t) {
+  if (!t.due) return "";
+  const today = TODAY();
+  if (!t.done && t.due < today) return `<span class="chip bad">прострочено · ${fmtDate(t.due)}</span>`;
+  if (t.due === today) return `<span class="chip hot">сьогодні</span>`;
+  return `<span class="chip">${fmtDate(t.due)}</span>`;
+}
+function habitRow(h, date = TODAY()) {
+  const on = doneOn(date, h.id);
+  const extra = h.freq === "weekly" ? `<span class="chip num">${weekCount(h.id)}/${h.target || 1} цього тижня</span>` : (h.minutes ? `<span class="chip num">${h.minutes} хв</span>` : "");
+  return `<div class="row ${on ? "done" : ""}">
+    <button class="check ${on ? "on" : ""}" data-act="habit" data-id="${esc(h.id)}" aria-pressed="${on}" aria-label="${on ? "Зняти позначку" : "Позначити виконаним"}: ${esc(h.title)}">${on ? CHECK : ""}</button>
+    <div class="t"><div>${esc(h.title)}</div><div class="meta">${areaChip(h.area)}${extra}</div></div>
+    <span></span></div>`;
+}
+function taskRow(t) {
+  return `<div class="row ${t.done ? "done" : ""}">
+    <button class="check ${t.done ? "on" : ""}" data-act="task" data-id="${esc(t.id)}" aria-pressed="${!!t.done}" aria-label="${t.done ? "Повернути" : "Виконано"}: ${esc(t.title)}">${t.done ? CHECK : ""}</button>
+    <div class="t"><div>${t.priority === "high" ? "‼ " : ""}${esc(t.title)}</div><div class="meta">${areaChip(t.area)}${dueChip(t)}${t.notes ? `<span>${esc(t.notes)}</span>` : ""}</div></div>
+    <button class="icon-btn" data-act="editTask" data-id="${esc(t.id)}" aria-label="Редагувати">✎</button></div>`;
+}
+function ring(p) {
+  const r = 36, c = 2 * Math.PI * r;
+  return `<svg class="ring" viewBox="0 0 84 84" role="img" aria-label="Виконано ${p}%"><circle class="bgc" cx="42" cy="42" r="${r}"/>
+    <circle class="fg" cx="42" cy="42" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - p / 100)}" transform="rotate(-90 42 42)"/>
+    <text x="42" y="48" text-anchor="middle">${p}%</text></svg>`;
+}
+function weekStrip() {
+  const ws = weekStart(new Date()), names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"], today = TODAY();
+  return `<div class="week">${names.map((n, i) => {
+    const d = ymd(addDays(ws, i)), p = d > today ? 0 : Math.round(dayRate(d) * 100);
+    return `<div class="wd ${d === today ? "today" : ""} ${isGood(d) ? "good" : ""}" title="${fmtDate(d)}: ${p}%"><i><em style="height:${p}%"></em></i>${n}</div>`;
+  }).join("")}</div>`;
+}
+function latestCoach() {
+  const n = S.notes[0];
+  if (!n) return `<p class="muted">Тут з'являтимуться мої нотатки: план зранку, перевірка ввечері й розбір тижня в неділю.</p>`;
+  const when = new Date(n.at).toLocaleString("uk-UA", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  return `<div class="coach"><small>${esc(when)} · ${esc({ morning: "ранок", evening: "вечір", weekly: "тиждень", page: "порада" }[n.kind] || "нотатка")}</small>${esc(n.text)}</div>`;
+}
+
+function viewToday() {
+  const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
+  const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
+  const soon = focusTasks().filter(t => t.due && t.due > TODAY() && t.due <= ymd(addDays(new Date(), 3))).sort(taskSort);
+  return `
+  ${set().examMode ? `<div class="panel exam"><b>Режим сесії</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у сесію теж». Серія не згорить.</span></div>` : ""}
+  ${missed >= 2 ? `<div class="panel exam"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
+  ${statusPanel()}
+  ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
+    <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
+    <div class="list">${habitRow({ id: "penalty", title: "20 хв ходьби або 30 віджимань", area: "body" })}</div></section>` : ""}
+  <section class="panel"><div class="gauge">${ring(p)}<div><h2>План дня</h2><p class="muted" style="margin:4px 0 10px">${done} з ${hs.length} звичок · мета ${set().threshold}%</p>${weekStrip()}</div></div></section>
+  <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
+    <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
+  ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
+  <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><a href="#tasks" class="eyebrow">усі задачі →</a></div>
+    <div class="list">${tt.map(taskRow).join("") || `<p class="muted">На сьогодні задач немає.</p>`}</div>
+    ${soon.length ? `<details><summary>Найближчі 3 дні: ${soon.length}</summary><div class="list">${soon.map(taskRow).join("")}</div></details>` : ""}</section>
+  <section class="panel"><div class="panel-head"><h2>Тренер</h2><span class="eyebrow">Claude</span></div>
+    <div id="coachBox">${latestCoach()}</div>
+    <div id="askBox" class="actions" ${sample ? "" : "hidden"}>
+      <button class="btn primary" type="button" data-act="advice">Порада на зараз</button>
+      <button class="btn ghost" type="button" data-act="ask">Спитати</button>
+    </div>
+    ${S.notes.length > 1 ? `<details><summary>Попередні нотатки</summary><div style="display:grid;gap:12px;margin-top:10px">${S.notes.slice(1, 8).map(n => `<div class="coach"><small>${esc(new Date(n.at).toLocaleString("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}</small>${esc(n.text)}</div>`).join("")}</div></details>` : ""}
+  </section>`;
+}
+
+function viewTasks() {
+  const open = openTasks().sort(taskSort), done = S.tasks.filter(t => t.done).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
+  const groups = [["Прострочені", open.filter(t => t.due && t.due < TODAY())], ["Сьогодні", open.filter(t => t.due === TODAY())],
+    ["Далі", open.filter(t => t.due && t.due > TODAY())], ["Без дати", open.filter(t => !t.due)]];
+  return `<section class="panel"><form class="inline" id="quickTask"><input type="text" id="qtTitle" placeholder="Нова задача, напр. «Здати лабу з дискретки»" aria-label="Нова задача" required>
+    <button class="btn primary">Додати</button></form>
+    <div class="actions"><button type="button" class="btn ghost" data-act="newTask">Детальніше: дата, напрям, пріоритет</button></div></section>
+  ${groups.filter(g => g[1].length).map(([n, l]) => `<section class="panel"><div class="panel-head"><h2>${n}</h2><span class="eyebrow">${l.length}</span></div><div class="list">${l.map(taskRow).join("")}</div></section>`).join("")
+    || `<section class="panel"><p class="muted">Відкритих задач немає.</p></section>`}
+  ${done.length ? `<section class="panel"><details><summary>Виконані: ${done.length}</summary><div class="list">${done.slice(0, 40).map(taskRow).join("")}</div></details></section>` : ""}`;
+}
+
+function viewHabits() {
+  const days = [...Array(14)].map((_, i) => ymd(addDays(new Date(), i - 13)));
+  const all = [...S.habits].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  return `<section class="panel"><div class="panel-head"><h2>Мої звички</h2><button class="btn primary" type="button" data-act="newHabit">Додати звичку</button></div>
+    <p class="muted" style="margin:0">Квадратики — останні 14 днів. Натисни на звичку, щоб змінити її.</p>
+    <div class="list">${all.map(h => `<div class="row" style="grid-template-columns:1fr auto">
+      <button class="t" data-act="editHabit" data-id="${esc(h.id)}" style="all:unset;cursor:pointer;display:grid;gap:4px;min-width:0">
+        <span style="${h.active === false ? "color:var(--muted);text-decoration:line-through" : ""}">${esc(h.title)}</span>
+        <span class="meta">${areaChip(h.area)}<span class="chip">${h.freq === "weekly" ? `${h.target || 1}× на тиждень` : "щодня"}</span>${h.keepInExams ? `<span class="chip">у сесію теж</span>` : ""}</span></button>
+      <div style="display:flex;gap:2px" aria-hidden="true">${days.map(d => `<i style="width:7px;height:18px;border-radius:2px;background:${doneOn(d, h.id) ? "var(--accent)" : "var(--soft)"}"></i>`).join("")}</div>
+    </div>`).join("") || `<p class="muted">Поки порожньо.</p>`}</div></section>`;
+}
+
+function viewGoals() {
+  const gs = [...S.goals].sort((a, b) => (a.deadline || "9999").localeCompare(b.deadline || "9999"));
+  return `<section class="panel"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
+    <p class="muted" style="margin:0">Ціль розбита на кроки. Прогрес рахується за виконаними кроками.</p></section>
+  ${gs.map(g => { const p = goalProgress(g); return `<section class="panel">
+    <div class="panel-head"><h2>${esc(g.title)}</h2><button class="icon-btn" data-act="editGoal" data-id="${esc(g.id)}" aria-label="Редагувати ціль">✎</button></div>
+    <div class="meta" style="font-size:13px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap">${areaChip(g.area)}${g.deadline ? `<span class="chip">до ${fmtDate(g.deadline)}</span>` : ""}<span class="chip num">${p}%</span></div>
+    ${g.why ? `<p class="muted" style="margin:0">${esc(g.why)}</p>` : ""}
+    <div class="bar"><span style="width:${p}%"></span></div>
+    <ul class="steps">${(g.steps || []).map((s, i) => `<li class="${s.done ? "done" : ""}"><button class="check ${s.done ? "on" : ""}" data-act="step" data-id="${esc(g.id)}" data-i="${i}" aria-pressed="${!!s.done}" aria-label="Крок: ${esc(s.t)}">${s.done ? CHECK : ""}</button><span>${esc(s.t)}</span></li>`).join("")}</ul>
+  </section>`; }).join("") || `<section class="panel"><p class="muted">Цілей поки немає.</p></section>`}
+  <section class="panel"><div class="panel-head"><h2>Досягнення</h2><span class="eyebrow">${achievements(game()).filter(a => a[2]).length}/${achievements(game()).length}</span></div>
+    <p class="muted" style="margin:0">Досвід: звичка 10 + хвилини/3, щоденний квест +${XP.quest}, задача +20 (важлива +40), крок цілі +${XP.step}.</p>
+    <div class="ach">${achievements(game()).map(([n, d, ok]) => `<div class="${ok ? "got" : "locked"}"><b>${ok ? "★ " : ""}${esc(n)}</b><small>${esc(d)}</small></div>`).join("")}</div></section>`;
+}
+
+function viewSetup() {
+  const s = set();
+  return `<section class="panel"><h2>Про тебе</h2>
+    <p class="muted" style="margin:0">Тренер звертається до тебе на ім'я і враховує, чим ти живеш.</p>
+    <div class="grid2"><label class="field">Ім'я<input type="text" id="pName" value="${esc(s.name)}"></label>
+    <label class="field">Хто ти й до чого йдеш<input type="text" id="pAbout" value="${esc(s.about)}" placeholder="напр. студент 2 курсу, вчу Python, хочу на стажування"></label></div></section>
+  <section class="panel"><h2>Режим сесії</h2>
+    <p class="muted" style="margin:0">Під час сесії лишаються тільки навчання і звички з позначкою «у сесію теж». Нагадування теж стають м'якшими.</p>
+    <div class="actions"><button class="btn ${s.examMode ? "primary" : "ghost"}" type="button" data-act="exam">${s.examMode ? "Сесія: увімкнено" : "Увімкнути режим сесії"}</button></div></section>
+  <section class="panel"><h2>Характер тренера</h2>
+    <div class="grid2"><label class="field">Тон нагадувань<select id="tone">
+      <option value="soft" ${s.tone === "soft" ? "selected" : ""}>М'який: підтримка, без тиску</option>
+      <option value="balanced" ${s.tone === "balanced" ? "selected" : ""}>Збалансований</option>
+      <option value="strict" ${s.tone === "strict" ? "selected" : ""}>Строгий: прямо і без поблажок</option></select></label>
+    <label class="field">День зараховано, якщо виконано<select id="threshold">${[50, 60, 70, 80, 100].map(v => `<option value="${v}" ${s.threshold == v ? "selected" : ""}>${v}% звичок</option>`).join("")}</select></label></div></section>
+  <section class="panel"><h2>Напрями</h2>
+    <div class="list">${areas().map((a, i) => `<div class="row" style="grid-template-columns:auto 1fr auto"><input type="color" value="${esc(a.color)}" data-area-color="${i}" aria-label="Колір: ${esc(a.name)}" style="width:32px;height:28px;border:0;background:none;padding:0">
+      <input type="text" value="${esc(a.name)}" data-area-name="${i}" aria-label="Назва напряму"><button class="icon-btn" type="button" data-act="delArea" data-i="${i}" aria-label="Прибрати напрям">✕</button></div>`).join("")}</div>
+    <div class="actions"><button class="btn ghost" type="button" data-act="addArea">Додати напрям</button></div></section>
+  <section class="panel"><h2>Нагадування</h2><p style="margin:0">${esc(s.reminders)}</p>
+    <p class="muted" style="margin:0">Нагадування надсилає Claude за розкладом з твого комп'ютера, коли застосунок Claude відкритий. Щоб змінити час, просто напиши Claude.</p></section>`;
+}
+
+let lastRoute = null;
+function render() {
+  const r = route();
+  document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.r === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  $("#viewTitle").textContent = TITLES[r];
+  $("#dateLine").textContent = new Date().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+  $("#streakNum").textContent = streak();
+  const view = $("#view");
+  // keep typed text in the quick-add field across live updates
+  const qt = $("#qtTitle"), keep = qt ? qt.value : "", hadFocus = document.activeElement === qt;
+  const coachBusy = $("#coachBox")?.dataset.busy === "1" ? $("#coachBox").innerHTML : null;
+  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, setup: viewSetup }[r]();
+  view.style.display = "grid"; view.style.gap = "18px";
+  if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
+  if (coachBusy && $("#coachBox")) { $("#coachBox").innerHTML = coachBusy; $("#coachBox").dataset.busy = "1"; }
+  lastRoute = r;
+  checkLevelUp();
+}
+
+// ---------- dialogs ----------
+const dlg = $("#dlg"), form = $("#dlgForm");
+function areaOptions(sel) { return areas().map(a => `<option value="${esc(a.id)}" ${a.id === sel ? "selected" : ""}>${esc(a.name)}</option>`).join(""); }
+function openDialog(html, onSave, onDelete) {
+  form.innerHTML = html + `<div class="actions" style="justify-content:space-between">
+    <div>${onDelete ? `<button type="button" class="btn danger" id="dlgDel">Видалити</button>` : ""}</div>
+    <div class="actions"><button type="button" class="btn ghost" id="dlgCancel">Скасувати</button><button class="btn primary" value="save">Зберегти</button></div></div>`;
+  $("#dlgCancel").onclick = () => dlg.close();
+  if (onDelete) { const b = $("#dlgDel"); b.onclick = () => { if (b.dataset.sure) { onDelete(); dlg.close(); } else { b.dataset.sure = 1; b.textContent = "Так, видалити"; } }; }
+  form.onsubmit = e => { e.preventDefault(); const fd = Object.fromEntries(new FormData(form)); if (onSave(fd) !== false) dlg.close(); };
+  dlg.showModal();
+  form.querySelector("input,select,textarea")?.focus();
+}
+function taskDialog(t) {
+  const isNew = !t;
+  t = t || { title: "", area: "study", due: TODAY(), priority: "normal", notes: "" };
+  openDialog(`<h2>${isNew ? "Нова задача" : "Задача"}</h2>
+    <label class="field">Що зробити<input type="text" name="title" value="${esc(t.title)}" required></label>
+    <div class="grid2"><label class="field">Напрям<select name="area">${areaOptions(t.area)}</select></label>
+    <label class="field">Дедлайн<input type="date" name="due" value="${esc(t.due || "")}"></label></div>
+    <div class="grid2"><label class="field">Пріоритет<select name="priority"><option value="normal">звичайний</option><option value="high" ${t.priority === "high" ? "selected" : ""}>важливо</option></select></label></div>
+    <label class="field">Нотатка<textarea name="notes">${esc(t.notes || "")}</textarea></label>`,
+    fd => {
+      const data = { title: fd.title.trim(), area: fd.area, due: fd.due || null, priority: fd.priority, notes: fd.notes.trim() };
+      if (!data.title) return false;
+      if (isNew) { const ref = db.collection("tasks").doc(); write("tasks/" + ref.id, () => ref.set({ ...data, done: false, createdAt: new Date().toISOString() })); }
+      else write("tasks/" + t.id, () => db.doc("tasks/" + t.id).update(data));
+      toast(isNew ? "Задачу додано" : "Збережено");
+    },
+    isNew ? null : () => write("tasks/" + t.id, () => db.doc("tasks/" + t.id).delete()));
+}
+function habitDialog(h) {
+  const isNew = !h;
+  h = h || { title: "", area: "mind", freq: "daily", target: 3, minutes: 15, keepInExams: false, active: true };
+  openDialog(`<h2>${isNew ? "Нова звичка" : "Звичка"}</h2>
+    <label class="field">Назва<input type="text" name="title" value="${esc(h.title)}" required placeholder="напр. 10 сторінок книги"></label>
+    <div class="grid2"><label class="field">Напрям<select name="area">${areaOptions(h.area)}</select></label>
+    <label class="field">Як часто<select name="freq"><option value="daily">щодня</option><option value="weekly" ${h.freq === "weekly" ? "selected" : ""}>кілька разів на тиждень</option></select></label></div>
+    <div class="grid2"><label class="field">Разів на тиждень (для тижневих)<input type="number" name="target" min="1" max="7" value="${esc(h.target || 3)}"></label>
+    <label class="field">Хвилин<input type="number" name="minutes" min="0" max="600" value="${esc(h.minutes ?? "")}"></label></div>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="keepInExams" ${h.keepInExams ? "checked" : ""}> Лишати і в режимі сесії</label>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="active" ${h.active !== false ? "checked" : ""}> Активна</label>`,
+    fd => {
+      const data = { title: fd.title.trim(), area: fd.area, freq: fd.freq, target: Math.min(7, Math.max(1, Number(fd.target) || 1)),
+        minutes: Number(fd.minutes) || 0, keepInExams: !!fd.keepInExams, active: !!fd.active };
+      if (!data.title) return false;
+      if (isNew) { const ref = db.collection("habits").doc(); write("habits/" + ref.id, () => ref.set({ ...data, order: S.habits.length + 1 })); }
+      else write("habits/" + h.id, () => db.doc("habits/" + h.id).update(data));
+    },
+    isNew ? null : () => write("habits/" + h.id, () => db.doc("habits/" + h.id).delete()));
+}
+function goalDialog(g) {
+  const isNew = !g;
+  g = g || { title: "", area: "career", deadline: "", why: "", steps: [] };
+  openDialog(`<h2>${isNew ? "Нова ціль" : "Ціль"}</h2>
+    <label class="field">Ціль<input type="text" name="title" value="${esc(g.title)}" required></label>
+    <div class="grid2"><label class="field">Напрям<select name="area">${areaOptions(g.area)}</select></label>
+    <label class="field">До якої дати<input type="date" name="deadline" value="${esc(g.deadline || "")}"></label></div>
+    <label class="field">Навіщо мені це<input type="text" name="why" value="${esc(g.why || "")}"></label>
+    <label class="field">Кроки, кожен з нового рядка<textarea name="steps" rows="6">${esc((g.steps || []).map(s => s.t).join("\n"))}</textarea></label>`,
+    fd => {
+      const old = Object.fromEntries((g.steps || []).map(s => [s.t, s.done]));
+      const steps = fd.steps.split("\n").map(s => s.trim()).filter(Boolean).map(t => ({ t, done: !!old[t] }));
+      const data = { title: fd.title.trim(), area: fd.area, deadline: fd.deadline || null, why: fd.why.trim(), steps };
+      if (!data.title) return false;
+      if (isNew) { const ref = db.collection("goals").doc(); write("goals/" + ref.id, () => ref.set(data)); }
+      else write("goals/" + g.id, () => db.doc("goals/" + g.id).update(data));
+    },
+    isNew ? null : () => write("goals/" + g.id, () => db.doc("goals/" + g.id).delete()));
+}
+
+// ---------- coach (Claude on the viewer's account) ----------
+function snapshotText() {
+  const s = set(), t = TODAY();
+  const last7 = [...Array(7)].map((_, i) => { const d = ymd(addDays(new Date(), i - 6)); return `${d}: ${Math.round(dayRate(d) * 100)}%`; }).join(", ");
+  const gm = game();
+  return [`Рівень ${gm.lvl}, ранг ${gm.rank}, ${gm.into}/${gm.need} досвіду до наступного рівня.`, `Сьогодні ${t}. Тон тренера: ${{ soft: "м'який", balanced: "збалансований", strict: "строгий" }[s.tone]}. Режим сесії: ${s.examMode ? "так" : "ні"}. Серія: ${streak()} днів.`,
+    `Звички сьогодні: ${dailyHabits().map(h => `${h.title} [${doneOn(t, h.id) ? "✓" : "✗"}]`).join("; ") || "немає"}.`,
+    `Тижневі: ${weeklyHabits().map(h => `${h.title} ${weekCount(h.id)}/${h.target}`).join("; ") || "немає"}.`,
+    `Виконання за 7 днів: ${last7}.`,
+    `Відкриті задачі: ${openTasks().sort(taskSort).slice(0, 15).map(x => `${x.title}${x.due ? ` (до ${x.due})` : ""}${x.priority === "high" ? " !" : ""}`).join("; ") || "немає"}.`,
+    `Цілі: ${S.goals.map(g => `${g.title} ${goalProgress(g)}%, наступний крок: ${(g.steps || []).find(x => !x.done)?.t || "—"}`).join("; ") || "немає"}.`].join("\n");
+}
+async function coach(question) {
+  const box = $("#coachBox"); if (!box || !sample) return;
+  const ctl = new AbortController();
+  box.dataset.busy = "1"; box.innerHTML = `<div class="coach"><small>Claude думає…</small></div>`;
+  const who = [set().name, set().about].filter(Boolean).join(", ") || "користувача цього трекера";
+  const prompt = `Ти особистий тренер-наставник: ${who}. Твоя мета: щоб людина не збилась з курсу, але не вигоріла; навчання і здоров'я завжди в пріоритеті.
+Пиши українською, звертайся на «ти», 3-6 коротких речень або короткий список, без вступів. Будь конкретним: назви, що саме зробити найближчим часом і скільки хвилин це займе. Тон підлаштуй під налаштування нижче.
+
+Стан трекера:
+${snapshotText()}
+
+${question ? `Питання: ${question}` : "Дай пораду на найближчі години: що зробити першим і чому."}`;
+  try {
+    const { text } = await sample(prompt, { cache: false, signal: ctl.signal, onText: ({ text }) => { box.innerHTML = `<div class="coach"><small>Claude</small>${esc(text)}</div>`; } });
+    box.dataset.busy = "";
+    write("notes/new", () => db.collection("notes").add({ at: new Date().toISOString(), kind: "page", text: (question ? `Питання: ${question}\n\n` : "") + text }));
+  } catch (e) {
+    box.dataset.busy = "";
+    if (e.code === "not_granted" || e.code === "sampling_disabled") { $("#askBox").hidden = true; sample = null; box.innerHTML = latestCoach(); }
+    else box.innerHTML = (e.text ? `<div class="coach">${esc(e.text)}</div>` : "") + `<p class="muted">${e.code === "rate_limited" ? "Забагато запитів. Спробуй трохи пізніше." : "Не вдалося отримати відповідь. Спробуй ще раз."}</p>`;
+  }
+}
+function askDialog() {
+  openDialog(`<h2>Спитати тренера</h2><label class="field">Твоє питання<textarea name="q" rows="4" required placeholder="напр. Я втомився, що можна пропустити сьогодні?"></textarea></label>`,
+    fd => { if (!fd.q.trim()) return false; if (route() !== "today") location.hash = "#today"; setTimeout(() => coach(fd.q.trim()), 0); });
+  $("#dlgForm button[value=save]").textContent = "Спитати";
+}
+
+// ---------- events ----------
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const id = b.dataset.id, act = b.dataset.act;
+  if (act === "habit") toggleHabit(id);
+  if (act === "task") { const t = S.tasks.find(x => x.id === id); if (t) toggleTask(t); }
+  if (act === "editTask") taskDialog(S.tasks.find(x => x.id === id));
+  if (act === "newTask") taskDialog(null);
+  if (act === "newHabit") habitDialog(null);
+  if (act === "editHabit") habitDialog(S.habits.find(x => x.id === id));
+  if (act === "newGoal") goalDialog(null);
+  if (act === "editGoal") goalDialog(S.goals.find(x => x.id === id));
+  if (act === "step") { const g = S.goals.find(x => x.id === id); if (g) toggleStep(g, Number(b.dataset.i)); }
+  if (act === "exam") saveSettings({ examMode: !set().examMode });
+  if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
+  if (act === "delArea") { const l = [...areas()]; l.splice(Number(b.dataset.i), 1); saveSettings({ areas: l }); }
+  if (act === "advice") coach("");
+  if (act === "ask") askDialog();
+});
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.id === "tone") saveSettings({ tone: el.value });
+  if (el.id === "pName") saveSettings({ name: el.value.trim() });
+  if (el.id === "pAbout") saveSettings({ about: el.value.trim() });
+  if (el.id === "threshold") saveSettings({ threshold: Number(el.value) });
+  if (el.dataset.areaName !== undefined || el.dataset.areaColor !== undefined) {
+    const l = areas().map(a => ({ ...a })), i = Number(el.dataset.areaName ?? el.dataset.areaColor);
+    if (el.dataset.areaName !== undefined) l[i].name = el.value.trim() || l[i].name; else l[i].color = el.value;
+    saveSettings({ areas: l });
+  }
+});
+document.addEventListener("submit", e => {
+  if (e.target.id !== "quickTask") return;
+  e.preventDefault();
+  const title = $("#qtTitle").value.trim(); if (!title) return;
+  $("#qtTitle").value = "";
+  const ref = db.collection("tasks").doc();
+  write("tasks/" + ref.id, () => ref.set({ title, area: "study", due: null, priority: "normal", notes: "", done: false, createdAt: new Date().toISOString() }));
+  toast("Задачу додано");
+});
+addEventListener("hashchange", render);
+
+// ---------- boot ----------
+render();
+(async () => {
+  const c = window.claude;
+  db = c ? await c.use("db") : null;
+  if (!db) { $("#status").textContent = "Відкрий цю сторінку на claude.ai у своєму акаунті, щоб побачити й зберігати свій курс."; return; }
+  c.use("sample").then(s => { sample = s; render(); });
+  const timer = setTimeout(() => { $("#status").hidden = false; $("#status").textContent = "Дані поки не доходять. Можливо, немає з'єднання; сторінка оновиться сама."; }, 10000);
+  const need = ["habits", "tasks", "goals", "notes", "days", "settings"];
+  const got = (k, snap) => {
+    if (!snap.metadata.fromCache) S.loaded.add(k);
+    if (need.every(n => S.loaded.has(n))) { clearTimeout(timer); $("#status").hidden = true; }
+    render();
+  };
+  const fail = e => { clearTimeout(timer); $("#status").hidden = false; $("#status").textContent = e.code === "revoked" ? "Доступ до цієї сторінки змінився." : "Частину даних не вдалося завантажити. Онови сторінку пізніше."; };
+  const list = k => snap => { S[k] = snap.docs.map(d => ({ id: d.id, ...d.data() })); got(k, snap); };
+  db.collection("habits").onSnapshot(list("habits"), fail);
+  db.collection("tasks").onSnapshot(list("tasks"), fail);
+  db.collection("goals").onSnapshot(list("goals"), fail);
+  db.collection("notes").orderBy("at", "desc").limit(10).onSnapshot(list("notes"), fail);
+  // All days: total XP needs the whole history (about 365 small documents a year).
+  db.collection("days").onSnapshot(snap => {
+    const m = {}; snap.docs.forEach(d => { m[d.id] = d.data(); }); S.days = m; got("days", snap);
+  }, fail);
+  db.doc("settings/main").onSnapshot(snap => { S.settings = snap.exists ? snap.data() : null; got("settings", snap); }, fail);
+})();
+</script>

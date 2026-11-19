@@ -135,6 +135,14 @@
   .levelup b { font: 700 13px var(--mono); letter-spacing: .14em; color: var(--brass); }
   .levelup strong { font: 700 34px var(--display); }
   #view { display: grid; gap: 18px; }
+  .principle .quote { margin: 0; font: 600 17px/1.45 var(--body); }
+  #eng { width: min(640px, calc(100vw - 24px)); padding: 16px; }
+  .engwrap { display: grid; gap: 10px; }
+  .englog { display: grid; gap: 8px; max-height: 46vh; overflow-y: auto; padding: 4px 2px; align-content: start; }
+  .msg { padding: 9px 12px; border-radius: 12px; max-width: 88%; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .msg.ai { background: var(--soft); justify-self: start; }
+  .msg.me { background: var(--accent); color: var(--accent-ink); justify-self: end; }
+  .msg.fb { max-width: 100%; border: 1px solid var(--brass); background: var(--surface); }
   .cmd { display: grid; gap: 8px; }
   .cmd textarea { min-height: 56px; }
   /* Wide screens: a second column; the status window and section headers span both */
@@ -174,6 +182,21 @@
 </div></nav>
 
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+<dialog id="eng" aria-labelledby="engTitle"><div class="engwrap">
+  <div class="panel-head"><h2 id="engTitle">Англійська з Claude</h2><button class="icon-btn" type="button" data-act="engClose" aria-label="Закрити">✕</button></div>
+  <label class="field">Тема<select id="engTopic">
+    <option value="interview">Співбесіда: розкажи про свої проєкти</option>
+    <option value="tech">Технічні питання з твоєї спеціальності</option>
+    <option value="small">Small talk: навчання, книги, шахи</option></select></label>
+  <div id="engLog" class="englog" aria-live="polite"></div>
+  <textarea id="engText" rows="2" placeholder="Відповідай англійською… (Enter — надіслати)" aria-label="Твоя відповідь англійською"></textarea>
+  <div class="actions">
+    <button class="btn ghost" type="button" data-act="engStart">Почати заново</button>
+    <button class="btn ghost" type="button" id="engMic" data-act="engMic" hidden>Говорити</button>
+    <button class="btn primary" type="button" id="engSend" data-act="engSend">Надіслати</button>
+    <button class="btn ghost" type="button" id="engFinish" data-act="engFinish" hidden>Завершити й отримати фідбек</button>
+    <button class="btn ghost" type="button" id="engVoice" data-act="engVoice" hidden>Голос: увімк.</button>
+  </div></div></dialog>
 
 <script>
 const DEFAULT_AREAS = [
@@ -250,7 +273,9 @@ const goalProgress = g => { const s = g.steps || []; return s.length ? Math.roun
 const XP = { habit: h => 10 + Math.round((h.minutes || 0) / 3), quest: 30, penalty: 25, task: t => t.priority === "high" ? 40 : 20, step: 50 };
 const STAT_NAMES = { career: "Майстерність", study: "Інтелект", books: "Мудрість", body: "Сила", mind: "Фокус", life: "Харизма" };
 const rankOf = l => l >= 55 ? "S" : l >= 35 ? "A" : l >= 20 ? "B" : l >= 10 ? "C" : l >= 5 ? "D" : "E";
-function game() {
+let _game = null;
+const game = () => _game || (_game = computeGame());
+function computeGame() {
   const byArea = {}, hm = Object.fromEntries(S.habits.map(h => [h.id, h]));
   let total = 0, tasksDone = 0, goalsDone = 0;
   const add = (a, x) => { if (a) byArea[a] = (byArea[a] || 0) + x; total += x; };
@@ -404,6 +429,8 @@ function viewToday() {
   <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
     <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
+  ${principlePanel()}
+  ${sample ? englishPanel() : ""}
   <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><a href="#tasks" class="eyebrow">усі задачі →</a></div>
     <div class="list">${tt.map(taskRow).join("") || `<p class="muted">На сьогодні задач немає.</p>`}</div>
     ${soon.length ? `<details><summary>Найближчі 3 дні: ${soon.length}</summary><div class="list">${soon.map(taskRow).join("")}</div></details>` : ""}</section>
@@ -484,6 +511,7 @@ function viewSetup() {
 
 let lastRoute = null;
 function render() {
+  _game = null;
   const r = route();
   document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.r === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   $("#viewTitle").textContent = TITLES[r];
@@ -708,6 +736,143 @@ ${idsText()}
   }
 }
 
+// ---------- principle of the day (own short paraphrases, rotated by date) ----------
+const PRINCIPLES = [
+  ["Карнегі", "Перш ніж критикувати, спробуй зрозуміти, чому людина так зробила."],
+  ["Карнегі", "Щиро цікався іншими: постав питання і дослухай відповідь до кінця."],
+  ["Карнегі", "Називай людей на ім'я. Для кожного це найприємніше слово."],
+  ["Карнегі", "Говори про те, що цікаво співрозмовнику, а не тобі."],
+  ["Карнегі", "Помилився — визнай це швидко й чесно, без виправдань."],
+  ["Карнегі", "Починай розмову з того, у чому ви згодні."],
+  ["Карнегі", "Хвали конкретно: що саме вийшло добре і чому."],
+  ["Грін", "Дивись на те, що люди роблять, а не лише на те, що кажуть."],
+  ["Грін", "Помічай свої емоції до того, як вони ухвалять рішення за тебе."],
+  ["Грін", "Довга мета сильніша за бажання цієї хвилини. Згадай свою."],
+  ["Грін", "Его і заздрість є в кожному, і в тобі теж. Помічай їх без осуду."],
+  ["Грін", "Перше враження оманливе: дай людині час показати себе."],
+  ["Грін", "Тиск оточення сильний. Спитай себе: це моя думка чи групи?"],
+  ["Грін", "Люди рідко змінюються різко. Звички показують характер точніше за обіцянки."],
+];
+function principleToday() {
+  const d = new Date(), start = new Date(d.getFullYear(), 0, 0);
+  return PRINCIPLES[Math.floor((d - start) / 864e5) % PRINCIPLES.length];
+}
+const applyHabit = () => S.habits.find(h => h.active !== false && /принцип/i.test(h.title || ""));
+function principlePanel() {
+  const [src, text] = principleToday(), h = applyHabit();
+  return `<section class="panel principle"><div class="panel-head"><h2>Принцип дня</h2><span class="eyebrow">${esc(src)}</span></div>
+    <p class="quote">${esc(text)}</p>
+    ${h ? `<div class="actions"><button class="btn ${doneOn(TODAY(), h.id) ? "primary" : "ghost"}" type="button" data-act="habit" data-id="${esc(h.id)}">${doneOn(TODAY(), h.id) ? "Застосовано сьогодні" : "Застосував сьогодні"}</button></div>` : ""}</section>`;
+}
+
+// ---------- English speaking practice: a short role-play with Claude, by voice or text ----------
+const ENG_TOPICS = {
+  interview: "an internship or junior job interview: ask about the candidate's own projects, teamwork, a hard problem they solved and their motivation",
+  tech: "a friendly technical chat about the student's field (for a developer: their main language, frameworks, SQL and REST), one simple question at a time",
+  small: "relaxed small talk about university life, books, chess and plans for the summer",
+};
+const eng = { turns: [], feedback: "", topic: "interview", dict: null, tts: null, listening: false, voice: true, busy: false, ctl: null };
+const englishHabit = () => S.habits.find(h => h.active !== false && /англ|english/i.test(h.title || ""));
+function englishPanel() {
+  const h = englishHabit();
+  return `<section class="panel"><div class="panel-head"><h2>Англійська з Claude</h2>${h && doneOn(TODAY(), h.id) ? `<span class="quest-done">СЬОГОДНІ Є</span>` : `<span class="eyebrow">10 хв</span>`}</div>
+    <p class="muted" style="margin:0">Коротка розмова англійською, як на співбесіді. Claude відповідає, виправляє помилки й наприкінці дає фідбек. Можна говорити голосом або писати.</p>
+    <div class="actions"><button class="btn primary" type="button" data-act="eng">Почати розмову</button></div></section>`;
+}
+function engRender() {
+  const log = $("#engLog");
+  log.innerHTML = eng.turns.slice(1).map(t => `<div class="msg ${t.role === "user" ? "me" : "ai"}">${esc(t.content)}</div>`).join("")
+    + (eng.feedback ? `<div class="msg ai fb">${esc(eng.feedback)}</div>` : "")
+    || `<p class="muted">Обери тему й натисни «Почати заново» або просто напиши першу фразу англійською.</p>`;
+  log.scrollTop = log.scrollHeight;
+  $("#engMic").hidden = !eng.dict; $("#engMic").textContent = eng.listening ? "Стоп" : "Говорити";
+  $("#engMic").classList.toggle("primary", eng.listening);
+  $("#engVoice").hidden = !eng.tts; $("#engVoice").textContent = eng.voice ? "Голос: увімк." : "Голос: вимк.";
+  $("#engSend").disabled = $("#engFinish").disabled = eng.busy;
+  $("#engFinish").hidden = eng.turns.length < 4;
+}
+function engSystem() {
+  return `You are a friendly English speaking partner for a Ukrainian student (about B1 level) who is preparing for IT internship interviews. Scenario: ${ENG_TOPICS[eng.topic]}. What you know about the student: ${[set().name, set().about].filter(Boolean).join(", ") || "a university student"}.
+Rules: write plain text only. Ask exactly one question per reply, at most 3 short sentences, in simple natural English. If the student's last message has a real mistake, start your reply with one line in Ukrainian beginning with "Виправлення:" showing the better phrase, then continue in English. Never lecture.`;
+}
+async function engAsk() {
+  if (!sample || eng.busy) return;
+  eng.busy = true; eng.ctl = new AbortController(); engRender();
+  const log = $("#engLog"), bubble = document.createElement("div");
+  bubble.className = "msg ai"; bubble.textContent = "…"; log.append(bubble); log.scrollTop = log.scrollHeight;
+  try {
+    const { text } = await sample(eng.turns, { cache: false, modelTier: "quick", signal: eng.ctl.signal,
+      onText: ({ text: t }) => { bubble.textContent = t; log.scrollTop = log.scrollHeight; } });
+    eng.turns.push({ role: "assistant", content: text });
+    if (eng.tts && eng.voice) {
+      const english = text.split("\n").filter(l => !/^Виправлення:/i.test(l.trim())).join(" ").trim();
+      if (english) eng.tts.speak(english, { language: "en" }).catch(() => {});
+    }
+  } catch (e) {
+    if (e.code !== "cancelled") bubble.textContent = e.code === "rate_limited" ? "Забагато запитів. Спробуй за хвилину." : "Не вдалося отримати відповідь. Спробуй ще раз.";
+  }
+  eng.busy = false; engRender();
+}
+function engStart() {
+  eng.feedback = "";
+  eng.turns = [{ role: "user", content: engSystem() + "\nStart the conversation now with a short greeting and your first question." }];
+  engAsk();
+}
+function engSend() {
+  const box = $("#engText"), text = box.value.trim();
+  if (!text || eng.busy) return;
+  if (!eng.turns.length) eng.turns = [{ role: "user", content: engSystem() + " The student opens the conversation." }];
+  box.value = "";
+  eng.turns.push({ role: "user", content: text });
+  engAsk();
+}
+async function engFinish() {
+  if (!sample || eng.busy || eng.turns.length < 4) return;
+  eng.busy = true; engRender();
+  const dialogText = eng.turns.slice(1).map(t => (t.role === "user" ? "Student: " : "Partner: ") + t.content).join("\n");
+  const out = $("#engLog"), fb = document.createElement("div");
+  fb.className = "msg ai fb"; fb.textContent = "Готую фідбек…"; out.append(fb); out.scrollTop = out.scrollHeight;
+  eng.feedback = "Готую фідбек…";
+  try {
+    const { text } = await sample(`Ось розмова студента англійською з тренером. Дай фідбек українською, коротко і по ділу:
+1) 3 головні помилки студента з правильним варіантом;
+2) 3 вдалі фрази або сильні сторони;
+3) один конкретний фокус на наступну розмову;
+4) орієнтовний рівень (A2/B1/B2/C1) одним рядком.
+Без вступу.
+
+${dialogText}`, { cache: false, onText: ({ text: t }) => { eng.feedback = t; fb.textContent = t; out.scrollTop = out.scrollHeight; } });
+    eng.feedback = text;
+    write("notes/new", () => db.collection("notes").add({ at: new Date().toISOString(), kind: "page", text: "Англійська з Claude — фідбек:\n" + text }));
+    const h = englishHabit();
+    if (h && !doneOn(TODAY(), h.id)) toggleHabit(h.id);
+  } catch (e) { eng.feedback = "Не вдалося отримати фідбек. Спробуй ще раз."; }
+  eng.busy = false; engRender();
+}
+function engMic() {
+  if (!eng.dict) return;
+  if (eng.listening) { eng.dict.stop().catch(() => {}); return; }
+  eng.dict.start({ language: "en" }).catch(e => {
+    if (e && (e.code === "not_granted" || e.code === "unavailable")) { eng.dict = null; engRender(); toast("Голосове введення недоступне, пиши текстом"); }
+  });
+}
+function openEnglish() {
+  eng.turns = []; eng.feedback = ""; engRender();
+  $("#engTopic").value = eng.topic;
+  $("#eng").showModal();
+}
+async function engInit() {
+  const c = window.claude; if (!c) return;
+  const [d, t] = await Promise.all([c.use("dictation").catch(() => null), c.use("tts").catch(() => null)]);
+  eng.dict = d; eng.tts = t;
+  if (d) {
+    let partialBase = "";
+    d.onState(({ state }) => { eng.listening = state === "listening" || state === "starting"; if (state === "listening") partialBase = $("#engText").value; engRender(); });
+    d.onPartial(({ text }) => { $("#engText").value = (partialBase ? partialBase + " " : "") + text; });
+    d.onFinal(({ text }) => { partialBase = ((partialBase ? partialBase + " " : "") + text).trim(); $("#engText").value = partialBase; });
+  }
+}
+
 // ---------- events ----------
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
@@ -725,9 +890,17 @@ document.addEventListener("click", e => {
   if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
   if (act === "delArea") { const l = [...areas()]; l.splice(Number(b.dataset.i), 1); saveSettings({ areas: l }); }
   if (act === "advice") coach("");
+  if (act === "eng") openEnglish();
+  if (act === "engStart") { eng.ctl?.abort(); eng.busy = false; engStart(); }
+  if (act === "engSend") engSend();
+  if (act === "engFinish") engFinish();
+  if (act === "engMic") engMic();
+  if (act === "engVoice") { eng.voice = !eng.voice; if (!eng.voice) eng.tts?.stop(); engRender(); }
+  if (act === "engClose") { eng.ctl?.abort(); eng.busy = false; eng.tts?.stop(); if (eng.listening) eng.dict?.stop().catch(() => {}); $("#eng").close(); }
 });
 document.addEventListener("change", e => {
   const el = e.target;
+  if (el.id === "engTopic") eng.topic = el.value;
   if (el.id === "tone") saveSettings({ tone: el.value });
   if (el.id === "pName") saveSettings({ name: el.value.trim() });
   if (el.id === "pAbout") saveSettings({ about: el.value.trim() });
@@ -749,6 +922,7 @@ document.addEventListener("submit", e => {
   toast("Задачу додано");
 });
 addEventListener("hashchange", render);
+document.addEventListener("keydown", e => { if (e.target.id === "engText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); engSend(); } });
 document.addEventListener("keydown", e => { if (e.target.id === "cmdText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#askBox").requestSubmit(); } });
 
 // ---------- boot ----------
@@ -758,6 +932,7 @@ render();
   db = c ? await c.use("db") : null;
   if (!db) { $("#status").textContent = "Відкрий цю сторінку на claude.ai у своєму акаунті, щоб побачити й зберігати свій курс."; return; }
   c.use("sample").then(s => { sample = s; render(); });
+  engInit();
   const timer = setTimeout(() => { $("#status").hidden = false; $("#status").textContent = "Дані поки не доходять. Можливо, немає з'єднання; сторінка оновиться сама."; }, 10000);
   const need = ["habits", "tasks", "goals", "notes", "days", "settings"];
   const got = (k, snap) => {

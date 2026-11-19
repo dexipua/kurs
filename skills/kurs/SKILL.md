@@ -30,7 +30,7 @@ Check memory for a «Мій курс» URL, or list artifacts (`Artifact` action
    - coach tone: soft, balanced or strict.
 2. **Publish the page.** Copy `assets/tracker.html` from this skill into the current working folder as `kurs.html` and publish it with the Artifact tool:
    - `icon`: `"compass"`, `description`: one sentence;
-   - `capabilities`: `{"db": {"rules": [{"path": "", "read": "owner", "write": "owner"}]}, "sample": {}}` (owner-only: nobody else can read the data even if the link leaks).
+   - `capabilities`: `{"db": {"rules": [{"path": "", "read": "owner", "write": "owner"}]}, "sample": {}, "dictation": {}, "tts": {}}` (owner-only data: nobody else can read it even if the link leaks; `dictation` and `tts` power the voice English practice and simply hide where a device lacks them).
    Later updates: publish the same file again with `url` set to the tracker, so the link never changes.
 3. **Seed the data** with one `ArtifactData` `batch` (schema and starter ideas in `references/data.md`):
    - `settings/main` with name, about, tone, `examMode: false`, `threshold: 60`, the default areas, and a `reminders` line describing the schedule;
@@ -55,6 +55,11 @@ Check memory for a «Мій курс» URL, or list artifacts (`Artifact` action
 ## «Сказати Claude» on the page
 
 The Today tab has one box where the user types a request or a question. The page asks Claude (the `sample` capability, on the user's own account) with page tools `add_task`, `update_task`, `add_habit`, `update_habit` (`active: false` pauses a habit), `add_goal`, `update_settings`; it never deletes anything. Answers are saved to `notes` with `kind: "page"`.
+
+## English practice and principle of the day
+
+- «Англійська з Claude» on the Today tab: a short spoken or typed role-play (interview, technical chat, small talk) on the user's own Claude account. Replies are read aloud where `tts` works; the user can dictate where `dictation` works. «Завершити» asks for feedback (mistakes, good phrases, focus, rough level), saves it to `notes` and ticks the first active habit whose title mentions «англ»/«english».
+- «Принцип дня»: a rotating short principle (own paraphrases inspired by Carnegie and Greene). Its button ticks the first active habit whose title mentions «принцип», so add such a weekly habit if the user reads those books.
 
 ## Game layer (computed in the page, nothing extra is stored)
 

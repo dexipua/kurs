@@ -19,6 +19,7 @@
     --bg: #0F1820; --surface: #16222C; --ink: #E4ECF0; --muted: #93A4B1; --line: #263744;
     --accent: #4DB3C4; --accent-ink: #08151B; --brass: #E0AE48; --ok: #5CC28A; --warn: #F08A62; --soft: #1C2B36; color-scheme: dark }
 
+  *, *::before, *::after { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--body);
     padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -134,6 +135,29 @@
   .levelup div { background: var(--surface); border: 2px solid var(--brass); border-radius: 16px; padding: 22px 26px; text-align: center; display: grid; gap: 6px; max-width: 320px; }
   .levelup b { font: 700 13px var(--mono); letter-spacing: .14em; color: var(--brass); }
   .levelup strong { font: 700 34px var(--display); }
+  /* Skins: each one redefines the grounds, accent and second colour for light and dark */
+  :root[data-skin="forest"] { --bg: #EEF2EC; --soft: #E1EADD; --line: #D3DDCF; --accent: #2E6B3F; --brass: #A8741C }
+  @media (prefers-color-scheme: dark) { :root[data-skin="forest"]:not([data-theme="light"]) { --bg: #101712; --surface: #18221A; --soft: #1F2C22; --line: #2A3B2D; --accent: #6CC48A; --accent-ink: #0B160E; --brass: #DDAE52 } }
+  :root[data-skin="forest"][data-theme="dark"] { --bg: #101712; --surface: #18221A; --soft: #1F2C22; --line: #2A3B2D; --accent: #6CC48A; --accent-ink: #0B160E; --brass: #DDAE52 }
+  :root[data-skin="sunset"] { --bg: #F7EFE9; --soft: #F0E2D8; --line: #E6D4C8; --accent: #B4532A; --brass: #8A5BB0 }
+  @media (prefers-color-scheme: dark) { :root[data-skin="sunset"]:not([data-theme="light"]) { --bg: #1A1214; --surface: #241A1C; --soft: #2F2125; --line: #3D2B2F; --accent: #F0895E; --accent-ink: #1A0E08; --brass: #C59CE8 } }
+  :root[data-skin="sunset"][data-theme="dark"] { --bg: #1A1214; --surface: #241A1C; --soft: #2F2125; --line: #3D2B2F; --accent: #F0895E; --accent-ink: #1A0E08; --brass: #C59CE8 }
+  :root[data-skin="violet"] { --bg: #EFEEF8; --soft: #E4E1F4; --line: #D6D2EC; --accent: #5843C8; --brass: #B8740A }
+  @media (prefers-color-scheme: dark) { :root[data-skin="violet"]:not([data-theme="light"]) { --bg: #0D0B19; --surface: #16132A; --soft: #1F1B38; --line: #2C2749; --accent: #8F7BFF; --accent-ink: #0D0A1F; --brass: #F2B544 } }
+  :root[data-skin="violet"][data-theme="dark"] { --bg: #0D0B19; --surface: #16132A; --soft: #1F1B38; --line: #2C2749; --accent: #8F7BFF; --accent-ink: #0D0A1F; --brass: #F2B544 }
+  :root[data-skin="sakura"] { --bg: #FBF1F4; --soft: #F4E0E8; --line: #EAD2DC; --accent: #B83F72; --brass: #2F8574 }
+  @media (prefers-color-scheme: dark) { :root[data-skin="sakura"]:not([data-theme="light"]) { --bg: #1A1116; --surface: #24171E; --soft: #2F1E27; --line: #3E2934; --accent: #F08DB6; --accent-ink: #200A14; --brass: #6CC9B5 } }
+  :root[data-skin="sakura"][data-theme="dark"] { --bg: #1A1116; --surface: #24171E; --soft: #2F1E27; --line: #3E2934; --accent: #F08DB6; --accent-ink: #200A14; --brass: #6CC9B5 }
+  :root[data-skin="mono"] { --bg: #F1F1F0; --soft: #E5E5E3; --line: #D5D5D2; --accent: #232323; --accent-ink: #FFFFFF; --brass: #8C6A16 }
+  @media (prefers-color-scheme: dark) { :root[data-skin="mono"]:not([data-theme="light"]) { --bg: #111111; --surface: #1A1A1A; --soft: #242424; --line: #333333; --accent: #EDEDED; --accent-ink: #111111; --brass: #D8B45E } }
+  :root[data-skin="mono"][data-theme="dark"] { --bg: #111111; --surface: #1A1A1A; --soft: #242424; --line: #333333; --accent: #EDEDED; --accent-ink: #111111; --brass: #D8B45E }
+  .skins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .skin { display: grid; gap: 6px; justify-items: start; padding: 10px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); text-align: left; }
+  .skin[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent); }
+  .skin i { display: flex; gap: 4px; } .skin i b { width: 16px; height: 16px; border-radius: 50%; display: block; }
+  .timer { font: 700 40px/1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .timer.run { color: var(--accent); }
+  @media (max-width: 420px) { .skins { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   #view { display: grid; gap: 18px; }
   .principle .quote { margin: 0; font: 600 17px/1.45 var(--body); }
   #eng { width: min(640px, calc(100vw - 24px)); padding: 16px; }
@@ -204,7 +228,8 @@ const DEFAULT_AREAS = [
   { id: "books", name: "Книги", color: "#B7841B" }, { id: "body", name: "Тіло", color: "#2F7D4F" },
   { id: "mind", name: "Розум", color: "#1D6F80" }, { id: "life", name: "Життя", color: "#B4471F" },
 ];
-const DEFAULT_SETTINGS = { name: "", about: "", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
+const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"]];
+const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
 const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, settings: null, loaded: new Set(), readOnly: false };
 let db = null, sample = null;
@@ -283,6 +308,7 @@ function computeGame() {
     for (const id of Object.keys(d.done || {})) {
       if (id === "penalty") add("body", XP.penalty); else if (hm[id]) add(hm[id].area, XP.habit(hm[id]));
     }
+    if (d.focus) add("mind", Math.round(d.focus / 2));
     if (isGood(date)) add(null, XP.quest);
   }
   for (const t of S.tasks) if (t.done) { add(t.area, XP.task(t)); tasksDone++; }
@@ -302,6 +328,10 @@ function penaltyToday() {
   const y = ymd(addDays(new Date(), -1)), first = Object.keys(S.days).sort()[0];
   return !set().examMode && dailyHabits().length > 0 && first && first <= y && !isGood(y);
 }
+function habitDays(re) {
+  const ids = S.habits.filter(h => re.test(h.title || "")).map(h => h.id);
+  return Object.values(S.days).filter(d => ids.some(id => d.done && d.done[id])).length;
+}
 function achievements(g) {
   const ms = maxStreak();
   return [
@@ -311,6 +341,11 @@ function achievements(g) {
     ["Десять справ", "Закрити 10 задач", g.tasksDone >= 10], ["Ціль досягнута", "Виконати всі кроки цілі", g.goalsDone >= 1],
     ["Книжковий черв'як", "500 досвіду в «Книгах»", (g.byArea.books || 0) >= 500], ["Залізо", "500 досвіду в «Тілі»", (g.byArea.body || 0) >= 500],
     ["Гросмейстер у зародку", "300 досвіду у «Фокусі»", (g.byArea.mind || 0) >= 300],
+    ["Глибока робота", "500 хвилин у фокус-таймері", focusTotal() >= 500],
+    ["Поліглот", "10 днів англійської", habitDays(/англ|english/i) >= 10],
+    ["Людина принципів", "10 разів застосувати принцип з книги", habitDays(/принцип/i) >= 10],
+    ["Харизма", "300 досвіду в «Житті»", (g.byArea.life || 0) >= 300],
+    ["Ранг A", "Досягти 35 рівня", g.lvl >= 35], ["Ранг S", "Досягти 55 рівня", g.lvl >= 55],
   ];
 }
 function statusPanel() {
@@ -349,7 +384,7 @@ function toggleHabit(id, date = TODAY()) {
   }
   S.days = { ...S.days, [date]: { ...day, date, done } };
   render();
-  write("days/" + date, () => db.doc("days/" + date).set({ date, done }));
+  write("days/" + date, () => db.doc("days/" + date).set({ date, done, focus: day.focus || 0 }));
 }
 function toggleTask(t) {
   const done = !t.done;
@@ -429,6 +464,7 @@ function viewToday() {
   <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
     <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
+  ${focusPanel()}
   ${principlePanel()}
   ${sample ? englishPanel() : ""}
   <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><a href="#tasks" class="eyebrow">усі задачі →</a></div>
@@ -492,6 +528,11 @@ function viewSetup() {
     <p class="muted" style="margin:0">Тренер звертається до тебе на ім'я і враховує, чим ти живеш.</p>
     <div class="grid2"><label class="field">Ім'я<input type="text" id="pName" value="${esc(s.name)}"></label>
     <label class="field">Хто ти й до чого йдеш<input type="text" id="pAbout" value="${esc(s.about)}" placeholder="напр. студент 2 курсу, вчу Python, хочу на стажування"></label></div></section>
+  <section class="panel"><div class="panel-head"><h2>Вигляд</h2><label class="field" style="min-width:150px">Режим<select id="lookMode">
+      <option value="system" ${s.mode === "system" || !s.mode ? "selected" : ""}>Як у системі</option>
+      <option value="light" ${s.mode === "light" ? "selected" : ""}>Світлий</option>
+      <option value="dark" ${s.mode === "dark" ? "selected" : ""}>Темний</option></select></label></div>
+    <div class="skins">${SKINS.map(([id, n, a, b]) => `<button type="button" class="skin" data-act="skin" data-skin="${id}" aria-pressed="${(s.skin || "sea") === id}"><i><b style="background:${a}"></b><b style="background:${b}"></b></i>${n}</button>`).join("")}</div></section>
   <section class="panel"><h2>Режим сесії</h2>
     <p class="muted" style="margin:0">Під час сесії лишаються тільки навчання і звички з позначкою «у сесію теж». Нагадування теж стають м'якшими.</p>
     <div class="actions"><button class="btn ${s.examMode ? "primary" : "ghost"}" type="button" data-act="exam">${s.examMode ? "Сесія: увімкнено" : "Увімкнути режим сесії"}</button></div></section>
@@ -509,9 +550,19 @@ function viewSetup() {
     <p class="muted" style="margin:0">Нагадування надсилає Claude за розкладом і вони приходять у застосунок Claude на телефоні. Щоб змінити час чи тон, напиши це в поле «Сказати Claude» або в чаті з Claude.</p></section>`;
 }
 
+let ownTheme = false;
+function applyLook() {
+  const s = set(), root = document.documentElement;
+  root.dataset.skin = s.skin || "sea";
+  if (s.mode === "light" || s.mode === "dark") { root.dataset.theme = s.mode; ownTheme = true; }
+  else if (ownTheme) { delete root.dataset.theme; ownTheme = false; }
+  try { localStorage.setItem("kurs.skin", root.dataset.skin); } catch {}
+}
+try { document.documentElement.dataset.skin = localStorage.getItem("kurs.skin") || "sea"; } catch {}
 let lastRoute = null;
 function render() {
   _game = null;
+  applyLook();
   const r = route();
   document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.r === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   $("#viewTitle").textContent = TITLES[r];
@@ -758,6 +809,43 @@ function principleToday() {
   return PRINCIPLES[Math.floor((d - start) / 864e5) % PRINCIPLES.length];
 }
 const applyHabit = () => S.habits.find(h => h.active !== false && /принцип/i.test(h.title || ""));
+// ---------- focus timer ----------
+const focus = { endAt: 0, minutes: 0, tick: null, audio: null };
+const focusTotal = () => Object.values(S.days).reduce((a, d) => a + (d.focus || 0), 0);
+function fmtLeft(ms) { const t = Math.max(0, Math.round(ms / 1000)); return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`; }
+function focusPanel() {
+  const run = focus.endAt > Date.now(), today = (S.days[TODAY()] || {}).focus || 0;
+  return `<section class="panel"><div class="panel-head"><h2>Фокус</h2><span class="eyebrow num">сьогодні ${today} хв</span></div>
+    <div class="timer num ${run ? "run" : ""}" id="focusClock" aria-live="off">${run ? fmtLeft(focus.endAt - Date.now()) : "25:00"}</div>
+    <p class="muted" style="margin:0">Телефон в інший кінець кімнати, одна задача, без перемикань. Кожні 2 хвилини фокусу — +1 досвіду у «Фокусі».</p>
+    <div class="actions">${run ? `<button class="btn danger" type="button" data-act="focusStop">Зупинити</button>`
+      : `<button class="btn primary" type="button" data-act="focus" data-min="25">25 хв</button><button class="btn ghost" type="button" data-act="focus" data-min="50">50 хв</button><button class="btn ghost" type="button" data-act="focus" data-min="10">10 хв</button>`}</div></section>`;
+}
+function focusBeep() {
+  try { const a = focus.audio; if (!a) return; [0, .35, .7].forEach(t => { const o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; g.gain.setValueAtTime(.15, a.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + t + .3); o.connect(g).connect(a.destination); o.start(a.currentTime + t); o.stop(a.currentTime + t + .3); }); } catch {}
+}
+function focusStart(min) {
+  if (!min) return;
+  try { focus.audio = focus.audio || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  focus.minutes = min; focus.endAt = Date.now() + min * 60000;
+  clearInterval(focus.tick);
+  focus.tick = setInterval(() => { const el = $("#focusClock"); if (el) el.textContent = fmtLeft(focus.endAt - Date.now()); if (Date.now() >= focus.endAt) focusStop(true); }, 1000);
+  render();
+}
+function focusStop(finished) {
+  clearInterval(focus.tick); focus.tick = null;
+  const done = finished ? focus.minutes : Math.floor((focus.minutes * 60000 - Math.max(0, focus.endAt - Date.now())) / 60000);
+  focus.endAt = 0;
+  if (done > 0) {
+    const date = TODAY(), day = S.days[date] || { date, done: {} }, total = (day.focus || 0) + done;
+    S.days = { ...S.days, [date]: { ...day, date, focus: total } };
+    write("days/" + date, () => db.doc("days/" + date).set({ date, done: day.done || {}, focus: total }));
+    toast(finished ? `Фокус-сесію завершено: ${done} хв, +${Math.round(done / 2)} досвіду` : `Зараховано ${done} хв фокусу`);
+  }
+  if (finished) focusBeep();
+  render();
+}
+
 function principlePanel() {
   const [src, text] = principleToday(), h = applyHabit();
   return `<section class="panel principle"><div class="panel-head"><h2>Принцип дня</h2><span class="eyebrow">${esc(src)}</span></div>
@@ -891,6 +979,9 @@ document.addEventListener("click", e => {
   if (act === "delArea") { const l = [...areas()]; l.splice(Number(b.dataset.i), 1); saveSettings({ areas: l }); }
   if (act === "advice") coach("");
   if (act === "eng") openEnglish();
+  if (act === "skin") saveSettings({ skin: b.dataset.skin });
+  if (act === "focus") focusStart(Number(b.dataset.min));
+  if (act === "focusStop") focusStop(false);
   if (act === "engStart") { eng.ctl?.abort(); eng.busy = false; engStart(); }
   if (act === "engSend") engSend();
   if (act === "engFinish") engFinish();
@@ -901,6 +992,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
   const el = e.target;
   if (el.id === "engTopic") eng.topic = el.value;
+  if (el.id === "lookMode") saveSettings({ mode: el.value });
   if (el.id === "tone") saveSettings({ tone: el.value });
   if (el.id === "pName") saveSettings({ name: el.value.trim() });
   if (el.id === "pAbout") saveSettings({ about: el.value.trim() });

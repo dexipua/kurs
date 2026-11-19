@@ -61,6 +61,11 @@ The Today tab has one box where the user types a request or a question. The page
 - «Англійська з Claude» on the Today tab: a short spoken or typed role-play (interview, technical chat, small talk) on the user's own Claude account. Replies are read aloud where `tts` works; the user can dictate where `dictation` works. «Завершити» asks for feedback (mistakes, good phrases, focus, rough level), saves it to `notes` and ticks the first active habit whose title mentions «англ»/«english».
 - «Принцип дня»: a rotating short principle (own paraphrases inspired by Carnegie and Greene). Its button ticks the first active habit whose title mentions «принцип», so add such a weekly habit if the user reads those books.
 
+## Look and focus
+
+- Settings → «Вигляд»: six colour skins (`settings/main.skin`: sea, forest, sunset, violet, sakura, mono) and `mode` (system, light, dark). Stored in the database, so every device shows the same look.
+- Today → «Фокус»: a 10/25/50-minute timer. Minutes are added to `days/<date>.focus` and give 1 XP per 2 minutes in «Фокус» (mind). Keep `focus` when writing a day document.
+
 ## Game layer (computed in the page, nothing extra is stored)
 
 XP: habit `10 + minutes/3`, daily quest (≥ threshold % of daily habits) +30, penalty quest +25, task 20 (high 40), goal step 50. Level n→n+1 costs `100·n` XP. Ranks: E 1–4, D 5–9, C 10–19, B 20–34, A 35–54, S 55+. Stats per area: `1 + floor(areaXP/60)`. A missed daily quest yesterday opens a short penalty quest today (never in exam mode). Reminders may use these words; keep them encouraging, never shaming.

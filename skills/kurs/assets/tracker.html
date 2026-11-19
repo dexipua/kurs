@@ -134,7 +134,20 @@
   .levelup div { background: var(--surface); border: 2px solid var(--brass); border-radius: 16px; padding: 22px 26px; text-align: center; display: grid; gap: 6px; max-width: 320px; }
   .levelup b { font: 700 13px var(--mono); letter-spacing: .14em; color: var(--brass); }
   .levelup strong { font: 700 34px var(--display); }
+  #view { display: grid; gap: 18px; }
+  .cmd { display: grid; gap: 8px; }
+  .cmd textarea { min-height: 56px; }
+  /* Wide screens: a second column; the status window and section headers span both */
+  @media (min-width: 960px) {
+    .wrap, nav.tabs div { max-width: 1120px; }
+    #view.cols { display: block; columns: 2; column-gap: 18px; }
+    #view.cols > * { break-inside: avoid; margin-bottom: 18px; }
+    #view.cols > .span { column-span: all; }
+    h1 { font-size: 26px; }
+  }
+  @media (min-width: 1400px) { .wrap, nav.tabs div { max-width: 1240px; } }
   @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 360px) { body { font-size: 15px; } .panel { padding: 13px; } .rank { width: 48px; height: 48px; font-size: 22px; } nav.tabs a { font-size: 10.5px; } }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -278,7 +291,7 @@ function achievements(g) {
 function statusPanel() {
   const g = game();
   const stats = areas().map(a => ({ n: STAT_NAMES[a.id] || a.name, v: 1 + Math.floor((g.byArea[a.id] || 0) / 60) }));
-  return `<section class="panel status" aria-label="Статус">
+  return `<section class="panel status span" aria-label="Статус">
     <div class="st-head"><div class="rank ${g.rank}" title="Ранг">${g.rank}</div>
       <div><div class="eyebrow">Статус · ранг ${g.rank}</div><div class="lvl">Рівень ${g.lvl}</div>
       <div class="xpbar" role="progressbar" aria-valuemin="0" aria-valuemax="${g.need}" aria-valuenow="${g.into}"><span style="width:${Math.round(100 * g.into / g.need)}%"></span></div>
@@ -381,8 +394,8 @@ function viewToday() {
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
   const soon = focusTasks().filter(t => t.due && t.due > TODAY() && t.due <= ymd(addDays(new Date(), 3))).sort(taskSort);
   return `
-  ${set().examMode ? `<div class="panel exam"><b>Режим сесії</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у сесію теж». Серія не згорить.</span></div>` : ""}
-  ${missed >= 2 ? `<div class="panel exam"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
+  ${set().examMode ? `<div class="panel exam span"><b>Режим сесії</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у сесію теж». Серія не згорить.</span></div>` : ""}
+  ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${statusPanel()}
   ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
     <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
@@ -396,10 +409,11 @@ function viewToday() {
     ${soon.length ? `<details><summary>Найближчі 3 дні: ${soon.length}</summary><div class="list">${soon.map(taskRow).join("")}</div></details>` : ""}</section>
   <section class="panel"><div class="panel-head"><h2>Тренер</h2><span class="eyebrow">Claude</span></div>
     <div id="coachBox">${latestCoach()}</div>
-    <div id="askBox" class="actions" ${sample ? "" : "hidden"}>
-      <button class="btn primary" type="button" data-act="advice">Порада на зараз</button>
-      <button class="btn ghost" type="button" data-act="ask">Спитати</button>
-    </div>
+    <form id="askBox" class="cmd" ${sample ? "" : "hidden"}>
+      <label class="field" for="cmdText">Сказати Claude: попроси щось змінити або спитай</label>
+      <textarea id="cmdText" rows="2" placeholder="«додай задачу здати есе в понеділок», «я захворів, полегши план на 3 дні», «що почитати після Карнегі?»"></textarea>
+      <div class="actions"><button class="btn primary" type="submit">Виконати</button><button class="btn ghost" type="button" data-act="advice">Порада на зараз</button></div>
+    </form>
     ${S.notes.length > 1 ? `<details><summary>Попередні нотатки</summary><div style="display:grid;gap:12px;margin-top:10px">${S.notes.slice(1, 8).map(n => `<div class="coach"><small>${esc(new Date(n.at).toLocaleString("uk-UA", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}</small>${esc(n.text)}</div>`).join("")}</div></details>` : ""}
   </section>`;
 }
@@ -408,7 +422,7 @@ function viewTasks() {
   const open = openTasks().sort(taskSort), done = S.tasks.filter(t => t.done).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
   const groups = [["Прострочені", open.filter(t => t.due && t.due < TODAY())], ["Сьогодні", open.filter(t => t.due === TODAY())],
     ["Далі", open.filter(t => t.due && t.due > TODAY())], ["Без дати", open.filter(t => !t.due)]];
-  return `<section class="panel"><form class="inline" id="quickTask"><input type="text" id="qtTitle" placeholder="Нова задача, напр. «Здати лабу з дискретки»" aria-label="Нова задача" required>
+  return `<section class="panel span"><form class="inline" id="quickTask"><input type="text" id="qtTitle" placeholder="Нова задача, напр. «Здати лабу з дискретки»" aria-label="Нова задача" required>
     <button class="btn primary">Додати</button></form>
     <div class="actions"><button type="button" class="btn ghost" data-act="newTask">Детальніше: дата, напрям, пріоритет</button></div></section>
   ${groups.filter(g => g[1].length).map(([n, l]) => `<section class="panel"><div class="panel-head"><h2>${n}</h2><span class="eyebrow">${l.length}</span></div><div class="list">${l.map(taskRow).join("")}</div></section>`).join("")
@@ -431,7 +445,7 @@ function viewHabits() {
 
 function viewGoals() {
   const gs = [...S.goals].sort((a, b) => (a.deadline || "9999").localeCompare(b.deadline || "9999"));
-  return `<section class="panel"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
+  return `<section class="panel span"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
     <p class="muted" style="margin:0">Ціль розбита на кроки. Прогрес рахується за виконаними кроками.</p></section>
   ${gs.map(g => { const p = goalProgress(g); return `<section class="panel">
     <div class="panel-head"><h2>${esc(g.title)}</h2><button class="icon-btn" data-act="editGoal" data-id="${esc(g.id)}" aria-label="Редагувати ціль">✎</button></div>
@@ -440,7 +454,7 @@ function viewGoals() {
     <div class="bar"><span style="width:${p}%"></span></div>
     <ul class="steps">${(g.steps || []).map((s, i) => `<li class="${s.done ? "done" : ""}"><button class="check ${s.done ? "on" : ""}" data-act="step" data-id="${esc(g.id)}" data-i="${i}" aria-pressed="${!!s.done}" aria-label="Крок: ${esc(s.t)}">${s.done ? CHECK : ""}</button><span>${esc(s.t)}</span></li>`).join("")}</ul>
   </section>`; }).join("") || `<section class="panel"><p class="muted">Цілей поки немає.</p></section>`}
-  <section class="panel"><div class="panel-head"><h2>Досягнення</h2><span class="eyebrow">${achievements(game()).filter(a => a[2]).length}/${achievements(game()).length}</span></div>
+  <section class="panel span"><div class="panel-head"><h2>Досягнення</h2><span class="eyebrow">${achievements(game()).filter(a => a[2]).length}/${achievements(game()).length}</span></div>
     <p class="muted" style="margin:0">Досвід: звичка 10 + хвилини/3, щоденний квест +${XP.quest}, задача +20 (важлива +40), крок цілі +${XP.step}.</p>
     <div class="ach">${achievements(game()).map(([n, d, ok]) => `<div class="${ok ? "got" : "locked"}"><b>${ok ? "★ " : ""}${esc(n)}</b><small>${esc(d)}</small></div>`).join("")}</div></section>`;
 }
@@ -465,7 +479,7 @@ function viewSetup() {
       <input type="text" value="${esc(a.name)}" data-area-name="${i}" aria-label="Назва напряму"><button class="icon-btn" type="button" data-act="delArea" data-i="${i}" aria-label="Прибрати напрям">✕</button></div>`).join("")}</div>
     <div class="actions"><button class="btn ghost" type="button" data-act="addArea">Додати напрям</button></div></section>
   <section class="panel"><h2>Нагадування</h2><p style="margin:0">${esc(s.reminders)}</p>
-    <p class="muted" style="margin:0">Нагадування надсилає Claude за розкладом з твого комп'ютера, коли застосунок Claude відкритий. Щоб змінити час, просто напиши Claude.</p></section>`;
+    <p class="muted" style="margin:0">Нагадування надсилає Claude за розкладом і вони приходять у застосунок Claude на телефоні. Щоб змінити час чи тон, напиши це в поле «Сказати Claude» або в чаті з Claude.</p></section>`;
 }
 
 let lastRoute = null;
@@ -478,10 +492,12 @@ function render() {
   const view = $("#view");
   // keep typed text in the quick-add field across live updates
   const qt = $("#qtTitle"), keep = qt ? qt.value : "", hadFocus = document.activeElement === qt;
+  const cm = $("#cmdText"), cmdKeep = cm ? cm.value : "", cmdFocus = document.activeElement === cm;
   const coachBusy = $("#coachBox")?.dataset.busy === "1" ? $("#coachBox").innerHTML : null;
   view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, setup: viewSetup }[r]();
-  view.style.display = "grid"; view.style.gap = "18px";
+  view.className = r === "habits" ? "" : "cols";
   if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
+  if (r === "today" && lastRoute === "today" && $("#cmdText")) { $("#cmdText").value = cmdKeep; if (cmdFocus) $("#cmdText").focus(); }
   if (coachBusy && $("#coachBox")) { $("#coachBox").innerHTML = coachBusy; $("#coachBox").dataset.busy = "1"; }
   lastRoute = r;
   checkLevelUp();
@@ -592,10 +608,104 @@ ${question ? `Питання: ${question}` : "Дай пораду на найб�
     else box.innerHTML = (e.text ? `<div class="coach">${esc(e.text)}</div>` : "") + `<p class="muted">${e.code === "rate_limited" ? "Забагато запитів. Спробуй трохи пізніше." : "Не вдалося отримати відповідь. Спробуй ще раз."}</p>`;
   }
 }
-function askDialog() {
-  openDialog(`<h2>Спитати тренера</h2><label class="field">Твоє питання<textarea name="q" rows="4" required placeholder="напр. Я втомився, що можна пропустити сьогодні?"></textarea></label>`,
-    fd => { if (!fd.q.trim()) return false; if (route() !== "today") location.hash = "#today"; setTimeout(() => coach(fd.q.trim()), 0); });
-  $("#dlgForm button[value=save]").textContent = "Спитати";
+// "Сказати Claude": one box that answers questions and, with page tools, changes the tracker.
+const okArea = a => areas().some(x => x.id === a) ? a : null;
+const okDate = d => /^\d{4}-\d{2}-\d{2}$/.test(String(d || "")) ? String(d) : null;
+const pick = (obj, keys) => Object.fromEntries(keys.filter(k => obj[k] !== undefined && obj[k] !== null).map(k => [k, obj[k]]));
+function commandTools() {
+  const str = { type: "string" }, num = { type: "number" }, bool = { type: "boolean" };
+  return [
+    { name: "add_task", description: "Додає задачу. area — id напряму, due — YYYY-MM-DD або порожньо. Повертає id.",
+      inputSchema: { type: "object", properties: { title: str, area: str, due: str, priority: { type: "string", enum: ["normal", "high"] }, notes: str }, required: ["title"] },
+      execute: async i => {
+        const ref = db.collection("tasks").doc();
+        await ref.set({ title: String(i.title).slice(0, 200), area: okArea(i.area) || "study", due: okDate(i.due), priority: i.priority === "high" ? "high" : "normal",
+          notes: String(i.notes || "").slice(0, 500), done: false, createdAt: new Date().toISOString() });
+        return { id: ref.id };
+      } },
+    { name: "update_task", description: "Змінює задачу за id: title, due (YYYY-MM-DD або порожньо, щоб прибрати), priority, area, notes, done.",
+      inputSchema: { type: "object", properties: { id: str, title: str, due: str, priority: str, area: str, notes: str, done: bool }, required: ["id"] },
+      execute: async i => {
+        const t = S.tasks.find(x => x.id === String(i.id)); if (!t) throw new Error("Немає задачі з таким id");
+        const d = pick({ title: i.title && String(i.title), priority: i.priority === "high" ? "high" : i.priority ? "normal" : undefined, area: okArea(i.area),
+          notes: i.notes !== undefined ? String(i.notes) : undefined, done: typeof i.done === "boolean" ? i.done : undefined }, ["title", "priority", "area", "notes", "done"]);
+        if (i.due !== undefined) d.due = okDate(i.due);
+        if (d.done !== undefined) d.doneAt = d.done ? new Date().toISOString() : null;
+        await db.doc("tasks/" + t.id).update(d); return "ok";
+      } },
+    { name: "add_habit", description: "Додає звичку. freq: daily або weekly; target — разів на тиждень для weekly; minutes; keepInExams.",
+      inputSchema: { type: "object", properties: { title: str, area: str, freq: { type: "string", enum: ["daily", "weekly"] }, target: num, minutes: num, keepInExams: bool }, required: ["title"] },
+      execute: async i => {
+        const ref = db.collection("habits").doc();
+        await ref.set({ title: String(i.title).slice(0, 200), area: okArea(i.area) || "mind", freq: i.freq === "weekly" ? "weekly" : "daily",
+          target: Math.min(7, Math.max(1, Number(i.target) || 3)), minutes: Math.max(0, Number(i.minutes) || 0), keepInExams: !!i.keepInExams, active: true, order: S.habits.length + 1 });
+        return { id: ref.id };
+      } },
+    { name: "update_habit", description: "Змінює звичку за id: title, minutes, target, freq, area, keepInExams, active (false — поставити на паузу).",
+      inputSchema: { type: "object", properties: { id: str, title: str, minutes: num, target: num, freq: str, area: str, keepInExams: bool, active: bool }, required: ["id"] },
+      execute: async i => {
+        const h = S.habits.find(x => x.id === String(i.id)); if (!h) throw new Error("Немає звички з таким id");
+        const d = pick({ title: i.title && String(i.title), minutes: i.minutes !== undefined ? Math.max(0, Number(i.minutes) || 0) : undefined,
+          target: i.target !== undefined ? Math.min(7, Math.max(1, Number(i.target) || 1)) : undefined, freq: i.freq === "weekly" || i.freq === "daily" ? i.freq : undefined,
+          area: okArea(i.area), keepInExams: typeof i.keepInExams === "boolean" ? i.keepInExams : undefined, active: typeof i.active === "boolean" ? i.active : undefined },
+          ["title", "minutes", "target", "freq", "area", "keepInExams", "active"]);
+        await db.doc("habits/" + h.id).update(d); return "ok";
+      } },
+    { name: "add_goal", description: "Додає велику ціль з кроками. deadline — YYYY-MM-DD.",
+      inputSchema: { type: "object", properties: { title: str, area: str, deadline: str, why: str, steps: { type: "array", items: str } }, required: ["title"] },
+      execute: async i => {
+        const ref = db.collection("goals").doc();
+        await ref.set({ title: String(i.title).slice(0, 200), area: okArea(i.area) || "career", deadline: okDate(i.deadline), why: String(i.why || ""),
+          steps: (Array.isArray(i.steps) ? i.steps : []).slice(0, 20).map(t => ({ t: String(t), done: false })) });
+        return { id: ref.id };
+      } },
+    { name: "update_settings", description: "Змінює налаштування: tone (soft|balanced|strict), examMode, threshold (50-100).",
+      inputSchema: { type: "object", properties: { tone: str, examMode: bool, threshold: num } },
+      execute: async i => {
+        const d = pick({ tone: ["soft", "balanced", "strict"].includes(i.tone) ? i.tone : undefined, examMode: typeof i.examMode === "boolean" ? i.examMode : undefined,
+          threshold: i.threshold !== undefined ? Math.min(100, Math.max(50, Number(i.threshold) || 60)) : undefined }, ["tone", "examMode", "threshold"]);
+        const next = { ...set(), ...d }; S.settings = next; await db.doc("settings/main").set(next); return "ok";
+      } },
+  ];
+}
+function idsText() {
+  return [`Напрями (id: назва): ${areas().map(a => `${a.id}: ${a.name}`).join("; ")}.`,
+    `Звички: ${S.habits.map(h => `${h.id}: ${h.title} (${h.freq === "weekly" ? h.target + "×/тиждень" : "щодня"}, ${h.minutes || 0} хв${h.active === false ? ", на паузі" : ""})`).join("; ") || "немає"}.`,
+    `Відкриті задачі: ${openTasks().sort(taskSort).slice(0, 30).map(t => `${t.id}: ${t.title}${t.due ? " до " + t.due : ""}`).join("; ") || "немає"}.`,
+    `Цілі: ${S.goals.map(g => `${g.id}: ${g.title}`).join("; ") || "немає"}.`].join("\n");
+}
+let cmdCtl = null;
+async function runCommand(text) {
+  const box = $("#coachBox"); if (!box || !sample || !text) return;
+  cmdCtl?.abort(); cmdCtl = new AbortController();
+  const changes = [];
+  box.dataset.busy = "1"; box.innerHTML = `<div class="coach"><small>Claude думає…</small></div>`;
+  const who = [set().name, set().about].filter(Boolean).join(", ") || "користувача цього трекера";
+  const caps = await sample.limits().catch(() => null);
+  const tools = caps && caps.tools ? commandTools().map(t => ({ ...t, execute: async (i, ctx) => { const r = await t.execute(i, ctx); changes.push(t.name); return r; } })) : undefined;
+  const prompt = `Ти особистий тренер-наставник у трекері «Мій курс»: ${who}. Сьогодні ${TODAY()}.
+${tools ? "Якщо людина просить щось змінити — зроби це інструментами (можна кілька викликів). Не змінюй нічого, про що не просили. Видаляти не можна, лише ставити звичку на паузу (active: false). Якщо просять тимчасово полегшити план — зменш хвилини або постав на паузу 1-3 звички і скажи, як повернути." : "Змінювати трекер зараз не можеш — лише порадь, що змінити вручну."}
+Якщо це питання — просто відповідай. Пиши українською, на «ти», коротко: 1-5 речень; якщо щось змінив, наприкінці перелічи що саме.
+
+Стан трекера:
+${snapshotText()}
+${idsText()}
+
+Повідомлення: ${text}`;
+  try {
+    const { text: answer } = await sample(prompt, { signal: cmdCtl.signal, ...(tools ? { tools } : { cache: false }),
+      onText: ({ text: t }) => { box.innerHTML = `<div class="coach"><small>Claude</small>${esc(t)}</div>`; } });
+    box.dataset.busy = "";
+    if ($("#cmdText")) $("#cmdText").value = "";
+    if (changes.length) toast("Готово: зміни збережено");
+    write("notes/new", () => db.collection("notes").add({ at: new Date().toISOString(), kind: "page", text: `Ти: ${text}\n\n${answer}` }));
+  } catch (e) {
+    box.dataset.busy = "";
+    if (e.code === "cancelled") return;
+    if (e.code === "not_granted" || e.code === "sampling_disabled") { $("#askBox").hidden = true; sample = null; box.innerHTML = latestCoach(); return; }
+    box.innerHTML = (e.text ? `<div class="coach">${esc(e.text)}</div>` : "") +
+      `<p class="muted">${e.code === "rate_limited" ? "Забагато запитів. Спробуй трохи пізніше." : "Не вдалося отримати відповідь. Спробуй ще раз."}${changes.length ? " Частину змін уже збережено." : ""}</p>`;
+  }
 }
 
 // ---------- events ----------
@@ -615,7 +725,6 @@ document.addEventListener("click", e => {
   if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
   if (act === "delArea") { const l = [...areas()]; l.splice(Number(b.dataset.i), 1); saveSettings({ areas: l }); }
   if (act === "advice") coach("");
-  if (act === "ask") askDialog();
 });
 document.addEventListener("change", e => {
   const el = e.target;
@@ -630,6 +739,7 @@ document.addEventListener("change", e => {
   }
 });
 document.addEventListener("submit", e => {
+  if (e.target.id === "askBox") { e.preventDefault(); const t = $("#cmdText").value.trim(); if (t) runCommand(t); return; }
   if (e.target.id !== "quickTask") return;
   e.preventDefault();
   const title = $("#qtTitle").value.trim(); if (!title) return;
@@ -639,6 +749,7 @@ document.addEventListener("submit", e => {
   toast("Задачу додано");
 });
 addEventListener("hashchange", render);
+document.addEventListener("keydown", e => { if (e.target.id === "cmdText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#askBox").requestSubmit(); } });
 
 // ---------- boot ----------
 render();

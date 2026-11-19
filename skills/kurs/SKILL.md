@@ -52,6 +52,10 @@ Check memory for a «Мій курс» URL, or list artifacts (`Artifact` action
 - Changing reminder times or tone of the reminders: update the routines (`RemoteTrigger` `update`); tone inside the page lives in `settings/main.tone`.
 - Daylight saving: cloud cron is UTC. Where the user's timezone shifts (e.g. Europe/Kyiv on the last Sunday of March and October), shift the routines by an hour; the seed adds a task reminding the user.
 
+## «Сказати Claude» on the page
+
+The Today tab has one box where the user types a request or a question. The page asks Claude (the `sample` capability, on the user's own account) with page tools `add_task`, `update_task`, `add_habit`, `update_habit` (`active: false` pauses a habit), `add_goal`, `update_settings`; it never deletes anything. Answers are saved to `notes` with `kind: "page"`.
+
 ## Game layer (computed in the page, nothing extra is stored)
 
 XP: habit `10 + minutes/3`, daily quest (≥ threshold % of daily habits) +30, penalty quest +25, task 20 (high 40), goal step 50. Level n→n+1 costs `100·n` XP. Ranks: E 1–4, D 5–9, C 10–19, B 20–34, A 35–54, S 55+. Stats per area: `1 + floor(areaXP/60)`. A missed daily quest yesterday opens a short penalty quest today (never in exam mode). Reminders may use these words; keep them encouraging, never shaming.

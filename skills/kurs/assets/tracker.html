@@ -108,8 +108,8 @@
   dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink); padding: 18px; width: min(520px, calc(100vw - 32px)); }
   dialog::backdrop { background: rgb(8 16 22 / .45); }
   dialog form { display: grid; gap: 12px; }
-  .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg);
-    padding: 9px 14px; border-radius: 10px; font-size: 14px; z-index: 9; max-width: calc(100vw - 32px); }
+  .toasts { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom, 0px)); z-index: 9; display: grid; gap: 6px; justify-items: center; width: max-content; max-width: calc(100vw - 32px); pointer-events: none; }
+  .toast { background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 14px; box-shadow: 0 8px 24px -10px rgb(0 0 0 / .4); }
   /* Game layer: a status window with rank, level, XP and stats */
   .status { border: 1.5px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent); }
   .st-head { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; }
@@ -180,7 +180,35 @@
   @media (min-width: 1400px) { .wrap, nav.tabs div { max-width: 1240px; } }
   @media (max-width: 420px) { .grid2 { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 360px) { body { font-size: 15px; } .panel { padding: 13px; } .rank { width: 48px; height: 48px; font-size: 22px; } nav.tabs a { font-size: 10.5px; } }
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  /* Motion layer: quick, springy, never in the way; all of it switches off for reduced motion */
+  body { background-image: radial-gradient(1100px 380px at 50% -180px, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%); background-repeat: no-repeat; }
+  body, .panel, nav.tabs, .stat, .chip, .btn, .check, input, select, textarea, .skin { transition: background-color .35s ease, border-color .35s ease, color .35s ease, box-shadow .25s ease, transform .15s ease; }
+  .btn:active, .check:active, .skin:active { transform: scale(.96); }
+  @media (hover: hover) { #view .panel:hover { box-shadow: 0 8px 24px -12px color-mix(in srgb, var(--ink) 30%, transparent); } .btn:hover { filter: brightness(1.06); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { 0% { transform: scale(.6); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  @keyframes ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 55%, transparent); } to { box-shadow: 0 0 0 12px transparent; } }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes dlgIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes glow { 0%, 100% { text-shadow: 0 0 0 transparent; transform: none; } 50% { text-shadow: 0 0 14px color-mix(in srgb, var(--brass) 70%, transparent); transform: scale(1.08); } }
+  @keyframes hop { 0% { transform: translateY(0); } 40% { transform: translateY(-4px); } 100% { transform: translateY(0); } }
+  @keyframes fall { 0% { transform: translate3d(0, -10vh, 0) rotate(0); opacity: 1; } 100% { transform: translate3d(var(--dx), 105vh, 0) rotate(var(--rot)); opacity: .9; } }
+  @keyframes burst { 0% { transform: scale(.5); opacity: 0; } 60% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+  @keyframes shine { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+  #view.enter > * { animation: rise .45s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .check.pop { animation: pop .38s cubic-bezier(.3, 1.6, .5, 1), ring .6s ease-out; }
+  .toast { animation: toastIn .28s cubic-bezier(.2, .8, .2, 1); }
+  dialog[open] { animation: dlgIn .22s cubic-bezier(.2, .8, .2, 1); }
+  dialog[open]::backdrop { animation: fadeIn .22s ease; }
+  .streak.hot b { animation: glow 2.6s ease-in-out infinite; display: inline-block; }
+  nav.tabs a[aria-current="page"] svg { animation: hop .35s ease; }
+  .xpbar span { background-size: 200% 100%; background-image: linear-gradient(90deg, var(--accent), var(--brass), var(--accent)); animation: shine 6s linear infinite; }
+  .levelup div { animation: burst .45s cubic-bezier(.2, 1.4, .4, 1) both; box-shadow: 0 0 60px -10px var(--brass); }
+  .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 30; overflow: hidden; }
+  .confetti i { position: absolute; top: 0; width: 8px; height: 12px; border-radius: 2px; animation: fall var(--t) cubic-bezier(.25, .6, .4, 1) forwards; }
+  .greet { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } .confetti { display: none; } }
 </style>
 
 <div class="wrap">
@@ -188,6 +216,7 @@
     <div>
       <div class="eyebrow" id="dateLine">Мій курс</div>
       <h1 id="viewTitle">Сьогодні</h1>
+      <div class="greet" id="greet"></div>
     </div>
     <div class="streak" title="Днів поспіль, коли виконано план дня">
       <b class="num" id="streakNum">0</b><span>днів<br>на курсі</span>
@@ -246,7 +275,13 @@ const area = id => areas().find(a => a.id === id) || { id, name: id || "—", co
 const fmtDate = s => { if (!s) return ""; const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("uk-UA", { day: "numeric", month: "short" }); };
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4.5 4.5L19 7"/></svg>';
 
-function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 2600); }
+function toast(msg) {
+  let box = document.querySelector(".toasts");
+  if (!box) { box = document.createElement("div"); box.className = "toasts"; box.setAttribute("role", "status"); document.body.append(box); }
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; box.append(t);
+  while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => t.remove(), 2600);
+}
 
 // One write at a time per document.
 const queues = {};
@@ -367,7 +402,7 @@ function checkLevelUp() {
   if (l > shownLevel) {
     const o = document.createElement("div"); o.className = "levelup"; o.setAttribute("role", "status");
     o.innerHTML = `<div><b>РІВЕНЬ ПІДВИЩЕНО</b><strong class="num">${shownLevel} → ${l}</strong><span class="muted">Ранг ${rankOf(l)}. Так тримати.</span></div>`;
-    o.onclick = () => o.remove(); document.body.append(o); setTimeout(() => o.remove(), 3500);
+    o.onclick = () => o.remove(); document.body.append(o); setTimeout(() => o.remove(), 3500); confetti(60);
   }
   shownLevel = l;
   try { localStorage.setItem("kurs.lvl", String(l)); } catch {}
@@ -378,7 +413,7 @@ function toggleHabit(id, date = TODAY()) {
   const day = S.days[date] || { date, done: {} };
   const done = { ...(day.done || {}) };
   if (done[id]) delete done[id]; else {
-    done[id] = true;
+    done[id] = true; popId = id; popUntil = Date.now() + 450;
     const h = S.habits.find(x => x.id === id);
     toast(id === "penalty" ? `+${XP.penalty} досвіду · Сила` : h ? `+${XP.habit(h)} досвіду · ${STAT_NAMES[h.area] || area(h.area).name}` : "Виконано");
   }
@@ -388,12 +423,13 @@ function toggleHabit(id, date = TODAY()) {
 }
 function toggleTask(t) {
   const done = !t.done;
-  t.done = done; render();
+  t.done = done; if (done) { popId = t.id; popUntil = Date.now() + 450; } render();
   if (done) toast(`+${XP.task(t)} досвіду · ${STAT_NAMES[t.area] || area(t.area).name}`);
   write("tasks/" + t.id, () => db.doc("tasks/" + t.id).update({ done, doneAt: done ? new Date().toISOString() : null }));
 }
 function toggleStep(g, i) {
   const steps = (g.steps || []).map((s, j) => j === i ? { ...s, done: !s.done } : s);
+  if (steps[i] && steps[i].done) { popId = g.id; popUntil = Date.now() + 450; }
   g.steps = steps; render();
   write("goals/" + g.id, () => db.doc("goals/" + g.id).update({ steps }));
 }
@@ -550,6 +586,57 @@ function viewSetup() {
     <p class="muted" style="margin:0">Нагадування надсилає Claude за розкладом і вони приходять у застосунок Claude на телефоні. Щоб змінити час чи тон, напиши це в поле «Сказати Claude» або в чаті з Claude.</p></section>`;
 }
 
+// ---------- motion ----------
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+let popId = null, popUntil = 0, prevXp = null, prevRing = null, questWas = null;
+function confetti(n = 36) {
+  if (calm()) return;
+  const cs = getComputedStyle(document.documentElement), colors = ["--accent", "--brass", "--ok", "--warn"].map(v => cs.getPropertyValue(v).trim());
+  const box = document.createElement("div"); box.className = "confetti"; box.setAttribute("aria-hidden", "true");
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement("i");
+    c.style.left = Math.random() * 100 + "vw"; c.style.background = colors[i % colors.length];
+    c.style.setProperty("--dx", (Math.random() * 160 - 80) + "px"); c.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+    c.style.setProperty("--t", (1.2 + Math.random() * 0.9) + "s"); c.style.animationDelay = Math.random() * 0.25 + "s";
+    box.append(c);
+  }
+  document.body.append(box); setTimeout(() => box.remove(), 2600);
+}
+function greeting() {
+  const h = new Date().getHours(), n = set().name;
+  const g = h < 5 ? "Доброї ночі" : h < 12 ? "Доброго ранку" : h < 18 ? "Доброго дня" : "Доброго вечора";
+  return n ? `${g}, ${n}` : g;
+}
+// Animate the XP bar and the day ring from their previous values instead of jumping.
+function animateFrom(el, prop, from, to) {
+  if (!el || from === null || from === to || calm()) return;
+  el.style.transition = "none"; el.style[prop] = from; void el.getBoundingClientRect();
+  el.style.transition = ""; el.style[prop] = to;
+}
+function afterRender(r, entering) {
+  const view = $("#view");
+  if (entering && !calm()) {
+    [...view.children].forEach((c, i) => c.style.setProperty("--i", Math.min(i, 8)));
+    view.classList.remove("enter"); void view.offsetWidth; view.classList.add("enter");
+    clearTimeout(afterRender.t); afterRender.t = setTimeout(() => view.classList.remove("enter"), 900);
+  }
+  // The data snapshot re-renders right after a tick, so keep the pop alive for a short moment.
+  if (popId && Date.now() < popUntil) view.querySelectorAll(`.check.on[data-id="${CSS.escape(popId)}"]`).forEach(b => b.classList.add("pop"));
+  const xp = $(".xpbar span");
+  if (xp) { const now = xp.style.width; animateFrom(xp, "width", prevXp !== null && parseFloat(prevXp) > parseFloat(now) ? "0%" : prevXp, now); prevXp = now; }
+  const ringFg = $(".ring .fg");
+  if (ringFg) { const now = ringFg.getAttribute("stroke-dashoffset"); if (prevRing !== null && prevRing !== now && !calm()) { ringFg.style.transition = "none"; ringFg.setAttribute("stroke-dashoffset", prevRing); void ringFg.getBoundingClientRect(); ringFg.style.transition = ""; ringFg.setAttribute("stroke-dashoffset", now); } prevRing = now; }
+  $(".streak").classList.toggle("hot", streak() > 0);
+  $("#greet").textContent = r === "today" ? greeting() : "";
+  // Celebrate the moment today's daily quest is closed (not on page load).
+  const loaded = ["habits", "days", "settings"].every(n => S.loaded.has(n));
+  if (loaded) {
+    const good = isGood(TODAY());
+    if (questWas === false && good) { confetti(); toast(`Щоденний квест виконано! +${XP.quest} досвіду`); }
+    questWas = good;
+  }
+}
+
 let ownTheme = false;
 function applyLook() {
   const s = set(), root = document.documentElement;
@@ -578,7 +665,9 @@ function render() {
   if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
   if (r === "today" && lastRoute === "today" && $("#cmdText")) { $("#cmdText").value = cmdKeep; if (cmdFocus) $("#cmdText").focus(); }
   if (coachBusy && $("#coachBox")) { $("#coachBox").innerHTML = coachBusy; $("#coachBox").dataset.busy = "1"; }
+  const entering = r !== lastRoute;
   lastRoute = r;
+  afterRender(r, entering);
   checkLevelUp();
 }
 
@@ -842,7 +931,7 @@ function focusStop(finished) {
     write("days/" + date, () => db.doc("days/" + date).set({ date, done: day.done || {}, focus: total }));
     toast(finished ? `Фокус-сесію завершено: ${done} хв, +${Math.round(done / 2)} досвіду` : `Зараховано ${done} хв фокусу`);
   }
-  if (finished) focusBeep();
+  if (finished) { focusBeep(); confetti(24); }
   render();
 }
 

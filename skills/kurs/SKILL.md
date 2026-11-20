@@ -66,6 +66,11 @@ The Today tab has one box where the user types a request or a question. The page
 - Settings → «Вигляд»: six colour skins (`settings/main.skin`: sea, forest, sunset, violet, sakura, mono) and `mode` (system, light, dark). Stored in the database, so every device shows the same look.
 - Today → «Фокус»: a 10/25/50-minute timer. Minutes are added to `days/<date>.focus` and give 1 XP per 2 minutes in «Фокус» (mind). Keep `focus` when writing a day document.
 
+## Calendar and look options
+
+- «Календар» tab: a month grid tinted by daily-habit completion, brass dot for a closed daily quest, task dots by area, focus minutes. Selecting a past day lets the user tick that day's habits (writes `days/<that date>`); any day can get a task via «Додати задачу на цей день».
+- `settings/main` also holds `radius` (sharp | soft | round), `density` (cozy | compact), `font` (modern | rounded | classic | mono), and `skin` now has 12 values (sea, forest, sunset, violet, sakura, mono, neon, sand, lavender, coffee, aurora, ruby).
+
 ## Game layer (computed in the page, nothing extra is stored)
 
 XP: habit `10 + minutes/3`, daily quest (≥ threshold % of daily habits) +30, penalty quest +25, task 20 (high 40), goal step 50. Level n→n+1 costs `100·n` XP. Ranks: E 1–4, D 5–9, C 10–19, B 20–34, A 35–54, S 55+. Stats per area: `1 + floor(areaXP/60)`. A missed daily quest yesterday opens a short penalty quest today (never in exam mode). Reminders may use these words; keep them encouraging, never shaming.

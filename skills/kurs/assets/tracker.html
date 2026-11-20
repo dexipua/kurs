@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@600;700&family=JetBrains+Mono:wght@500;700&family=Lora:wght@500;700&family=Comfortaa:wght@600;700&display=swap" rel="stylesheet">
 <style>
   /* Layout: one phone-first column, a bearing-style header, bottom tab bar like an instrument panel */
   :root {
@@ -100,7 +100,7 @@
 
   nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line);
     padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
-  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
   nav.tabs a { text-decoration: none; color: var(--muted); display: grid; justify-items: center; gap: 2px; font-size: 11.5px; padding: 6px 2px; border-radius: 10px; }
   nav.tabs a svg { width: 22px; height: 22px; }
   nav.tabs a[aria-current="page"] { color: var(--accent); background: var(--soft); font-weight: 600; }
@@ -158,6 +158,66 @@
   .timer { font: 700 40px/1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
   .timer.run { color: var(--accent); }
   @media (max-width: 420px) { .skins { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  :root[data-skin="neon"] { --bg: #F1EFF8; --soft: #E6E2F3; --line: #D7D2EA; --accent: #C2187A; --brass: #0E8A9A }
+  @media (prefers-color-scheme: dark) { :root[data-skin="neon"]:not([data-theme="light"]) { --bg: #0B0A12; --surface: #13111E; --soft: #1C1930; --line: #2A2545; --accent: #FF3EA5; --accent-ink: #14020C; --brass: #22E4F0 } }
+  :root[data-skin="neon"][data-theme="dark"] { --bg: #0B0A12; --surface: #13111E; --soft: #1C1930; --line: #2A2545; --accent: #FF3EA5; --accent-ink: #14020C; --brass: #22E4F0 }
+  :root[data-skin="sand"] { --bg: #F5EFE4; --soft: #ECE2D2; --line: #E0D3BF; --accent: #8A5A2B; --brass: #3E7A6B }
+  @media (prefers-color-scheme: dark) { :root[data-skin="sand"]:not([data-theme="light"]) { --bg: #17130E; --surface: #211B14; --soft: #2B241B; --line: #3A3125; --accent: #E0A66A; --accent-ink: #1A0F04; --brass: #7BC2AE } }
+  :root[data-skin="sand"][data-theme="dark"] { --bg: #17130E; --surface: #211B14; --soft: #2B241B; --line: #3A3125; --accent: #E0A66A; --accent-ink: #1A0F04; --brass: #7BC2AE }
+  :root[data-skin="lavender"] { --bg: #F3F0FA; --soft: #E9E3F6; --line: #DCD4EE; --accent: #7550C2; --brass: #C2627E }
+  @media (prefers-color-scheme: dark) { :root[data-skin="lavender"]:not([data-theme="light"]) { --bg: #121019; --surface: #1B1824; --soft: #252131; --line: #332D42; --accent: #B79BF5; --accent-ink: #130A24; --brass: #F096B0 } }
+  :root[data-skin="lavender"][data-theme="dark"] { --bg: #121019; --surface: #1B1824; --soft: #252131; --line: #332D42; --accent: #B79BF5; --accent-ink: #130A24; --brass: #F096B0 }
+  :root[data-skin="coffee"] { --bg: #F3EEE9; --soft: #E8DFD7; --line: #DCD0C5; --accent: #6B4430; --brass: #B5873A }
+  @media (prefers-color-scheme: dark) { :root[data-skin="coffee"]:not([data-theme="light"]) { --bg: #14100D; --surface: #1E1814; --soft: #28201B; --line: #382D26; --accent: #D29A72; --accent-ink: #170C05; --brass: #E5BE6E } }
+  :root[data-skin="coffee"][data-theme="dark"] { --bg: #14100D; --surface: #1E1814; --soft: #28201B; --line: #382D26; --accent: #D29A72; --accent-ink: #170C05; --brass: #E5BE6E }
+  :root[data-skin="aurora"] { --bg: #ECF3F2; --soft: #DEEBE9; --line: #CFDFDC; --accent: #0F7A6C; --brass: #7C4DC4 }
+  @media (prefers-color-scheme: dark) { :root[data-skin="aurora"]:not([data-theme="light"]) { --bg: #071214; --surface: #0E1C1F; --soft: #14272B; --line: #1F383D; --accent: #3EE0B8; --accent-ink: #02130E; --brass: #B08CFF } }
+  :root[data-skin="aurora"][data-theme="dark"] { --bg: #071214; --surface: #0E1C1F; --soft: #14272B; --line: #1F383D; --accent: #3EE0B8; --accent-ink: #02130E; --brass: #B08CFF }
+  :root[data-skin="ruby"] { --bg: #F7EEEE; --soft: #EFE0E0; --line: #E4D0D0; --accent: #A3243B; --brass: #B07A1E }
+  @media (prefers-color-scheme: dark) { :root[data-skin="ruby"]:not([data-theme="light"]) { --bg: #140A0C; --surface: #1E1114; --soft: #2A171B; --line: #3B2227; --accent: #F06A82; --accent-ink: #1A0207; --brass: #E8B657 } }
+  :root[data-skin="ruby"][data-theme="dark"] { --bg: #140A0C; --surface: #1E1114; --soft: #2A171B; --line: #3B2227; --accent: #F06A82; --accent-ink: #1A0207; --brass: #E8B657 }
+  /* Shape, density and type options */
+  :root { --r: 14px; }
+  .panel, dialog { border-radius: var(--r); }
+  .btn, .stat, .skin, input[type=text], input[type=date], input[type=number], select, textarea { border-radius: calc(var(--r) * .7); }
+  :root[data-radius="sharp"] { --r: 4px; }
+  :root[data-radius="round"] { --r: 24px; }
+  :root[data-density="compact"] .panel { padding: 11px 12px; gap: 8px; }
+  :root[data-density="compact"] #view { gap: 12px; }
+  :root[data-density="compact"] #view.cols > * { margin-bottom: 12px; }
+  :root[data-density="compact"] .row { padding: 6px 2px; }
+  :root[data-density="compact"] body { font-size: 15px; }
+  :root[data-font="classic"] { --display: "Lora", Georgia, serif; --body: "Lora", Georgia, serif; }
+  :root[data-font="rounded"] { --display: "Comfortaa", "Segoe UI", sans-serif; }
+  :root[data-font="mono"] { --display: "JetBrains Mono", ui-monospace, monospace; --body: "JetBrains Mono", ui-monospace, monospace; }
+  .looks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 420px) { .looks { grid-template-columns: 1fr; } }
+  /* Calendar: a month grid tinted by how much of the daily quest was done */
+  .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .cal-head h2 { text-transform: capitalize; }
+  .cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .cal .wdn { font: 500 11px var(--mono); color: var(--muted); text-align: center; padding-bottom: 2px; }
+  .day { position: relative; aspect-ratio: 1 / 1; min-height: 40px; border-radius: calc(var(--r) * .6); border: 1px solid var(--line); padding: 5px;
+    background: color-mix(in srgb, var(--accent) calc(var(--p, 0) * 1%), var(--bg)); display: grid; align-content: space-between; text-align: left; cursor: pointer; color: var(--ink); min-width: 0; }
+  .day.out { opacity: .38; }
+  .day.today { border: 2px solid var(--accent); }
+  .day.good::after { content: ""; position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border-radius: 50%; background: var(--brass); }
+  .day[aria-pressed="true"] { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .day b { font: 600 13px var(--mono); }
+  .day.hi b { color: var(--accent-ink); }
+  .dots { display: flex; gap: 3px; flex-wrap: wrap; }
+  .dots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+  .day small { font: 500 10px var(--mono); color: inherit; opacity: .8; }
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); align-items: center; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+  .sumgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .sumgrid div { background: var(--soft); border-radius: calc(var(--r) * .6); padding: 10px; display: grid; gap: 2px; }
+  .sumgrid b { font: 700 20px var(--display); }
+  .sumgrid span { font-size: 12px; color: var(--muted); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-size: 13px; color: var(--muted); }
+  .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
   .principle .quote { margin: 0; font: 600 17px/1.45 var(--body); }
   #eng { width: min(640px, calc(100vw - 24px)); padding: 16px; }
@@ -231,6 +291,7 @@
   <a href="#tasks" data-r="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</a>
   <a href="#habits" data-r="habits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Звички</a>
   <a href="#goals" data-r="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Цілі</a>
+  <a href="#cal" data-r="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</a>
   <a href="#setup" data-r="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Налаштування</a>
 </div></nav>
 
@@ -257,8 +318,8 @@ const DEFAULT_AREAS = [
   { id: "books", name: "Книги", color: "#B7841B" }, { id: "body", name: "Тіло", color: "#2F7D4F" },
   { id: "mind", name: "Розум", color: "#1D6F80" }, { id: "life", name: "Життя", color: "#B4471F" },
 ];
-const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"]];
-const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
+const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"]];
+const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", radius: "soft", density: "cozy", font: "modern", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
 const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, settings: null, loaded: new Set(), readOnly: false };
 let db = null, sample = null;
@@ -440,7 +501,7 @@ function saveSettings(patch) {
 }
 
 // ---------- rendering ----------
-const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", setup: "Налаштування" };
+const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", cal: "Календар", setup: "Налаштування" };
 const route = () => (TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "today");
 
 function areaChip(id) { const a = area(id); return `<span class="meta"><span class="dot" style="background:${esc(a.color)}"></span>${esc(a.name)}</span>`; }
@@ -455,7 +516,7 @@ function habitRow(h, date = TODAY()) {
   const on = doneOn(date, h.id);
   const extra = h.freq === "weekly" ? `<span class="chip num">${weekCount(h.id)}/${h.target || 1} цього тижня</span>` : (h.minutes ? `<span class="chip num">${h.minutes} хв</span>` : "");
   return `<div class="row ${on ? "done" : ""}">
-    <button class="check ${on ? "on" : ""}" data-act="habit" data-id="${esc(h.id)}" aria-pressed="${on}" aria-label="${on ? "Зняти позначку" : "Позначити виконаним"}: ${esc(h.title)}">${on ? CHECK : ""}</button>
+    <button class="check ${on ? "on" : ""}" data-act="habit" data-id="${esc(h.id)}"${date !== TODAY() ? ` data-date="${date}"` : ""} aria-pressed="${on}" aria-label="${on ? "Зняти позначку" : "Позначити виконаним"}: ${esc(h.title)}">${on ? CHECK : ""}</button>
     <div class="t"><div>${esc(h.title)}</div><div class="meta">${areaChip(h.area)}${extra}</div></div>
     <span></span></div>`;
 }
@@ -518,17 +579,27 @@ function viewToday() {
 }
 
 function viewTasks() {
-  const open = openTasks().sort(taskSort), done = S.tasks.filter(t => t.done).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
+  const inF = t => !taskFilter || t.area === taskFilter;
+  const open = openTasks().filter(inF).sort(taskSort), done = S.tasks.filter(t => t.done && inF(t)).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
   const groups = [["Прострочені", open.filter(t => t.due && t.due < TODAY())], ["Сьогодні", open.filter(t => t.due === TODAY())],
     ["Далі", open.filter(t => t.due && t.due > TODAY())], ["Без дати", open.filter(t => !t.due)]];
   return `<section class="panel span"><form class="inline" id="quickTask"><input type="text" id="qtTitle" placeholder="Нова задача, напр. «Здати лабу з дискретки»" aria-label="Нова задача" required>
     <button class="btn primary">Додати</button></form>
-    <div class="actions"><button type="button" class="btn ghost" data-act="newTask">Детальніше: дата, напрям, пріоритет</button></div></section>
+    <div class="actions"><button type="button" class="btn ghost" data-act="newTask">Детальніше: дата, напрям, пріоритет</button></div>
+    <div class="chips" role="group" aria-label="Фільтр за напрямом"><button type="button" class="chip-btn" data-act="tfilter" data-area="" aria-pressed="${!taskFilter}">Усі · ${openTasks().length}</button>${areas().map(a => { const n = openTasks().filter(t => t.area === a.id).length; return n ? `<button type="button" class="chip-btn" data-act="tfilter" data-area="${esc(a.id)}" aria-pressed="${taskFilter === a.id}">${esc(a.name)} · ${n}</button>` : ""; }).join("")}</div></section>
   ${groups.filter(g => g[1].length).map(([n, l]) => `<section class="panel"><div class="panel-head"><h2>${n}</h2><span class="eyebrow">${l.length}</span></div><div class="list">${l.map(taskRow).join("")}</div></section>`).join("")
     || `<section class="panel"><p class="muted">Відкритих задач немає.</p></section>`}
   ${done.length ? `<section class="panel"><details><summary>Виконані: ${done.length}</summary><div class="list">${done.slice(0, 40).map(taskRow).join("")}</div></details></section>` : ""}`;
 }
 
+function habitStreak(h) {
+  if (h.freq === "weekly") { let n = 0, ws = weekStart(new Date());
+    for (let w = 1; w < 60; w++) { const s0 = addDays(ws, -7 * w); let c = 0; for (let i = 0; i < 7; i++) if (doneOn(ymd(addDays(s0, i)), h.id)) c++; if (c >= (h.target || 1)) n++; else break; }
+    return { n, unit: "тиж." }; }
+  let n = 0, d = new Date(); if (!doneOn(ymd(d), h.id)) d = addDays(d, -1);
+  for (let i = 0; i < 400 && doneOn(ymd(d), h.id); i++) { n++; d = addDays(d, -1); }
+  return { n, unit: "дн." };
+}
 function viewHabits() {
   const days = [...Array(14)].map((_, i) => ymd(addDays(new Date(), i - 13)));
   const all = [...S.habits].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
@@ -537,7 +608,7 @@ function viewHabits() {
     <div class="list">${all.map(h => `<div class="row" style="grid-template-columns:1fr auto">
       <button class="t" data-act="editHabit" data-id="${esc(h.id)}" style="all:unset;cursor:pointer;display:grid;gap:4px;min-width:0">
         <span style="${h.active === false ? "color:var(--muted);text-decoration:line-through" : ""}">${esc(h.title)}</span>
-        <span class="meta">${areaChip(h.area)}<span class="chip">${h.freq === "weekly" ? `${h.target || 1}× на тиждень` : "щодня"}</span>${h.keepInExams ? `<span class="chip">у сесію теж</span>` : ""}</span></button>
+        <span class="meta">${areaChip(h.area)}<span class="chip">${h.freq === "weekly" ? `${h.target || 1}× на тиждень` : "щодня"}</span>${(st => st.n ? `<span class="chip hot">серія ${st.n} ${st.unit}</span>` : "")(habitStreak(h))}${h.keepInExams ? `<span class="chip">у сесію теж</span>` : ""}</span></button>
       <div style="display:flex;gap:2px" aria-hidden="true">${days.map(d => `<i style="width:7px;height:18px;border-radius:2px;background:${doneOn(d, h.id) ? "var(--accent)" : "var(--soft)"}"></i>`).join("")}</div>
     </div>`).join("") || `<p class="muted">Поки порожньо.</p>`}</div></section>`;
 }
@@ -568,6 +639,11 @@ function viewSetup() {
       <option value="system" ${s.mode === "system" || !s.mode ? "selected" : ""}>Як у системі</option>
       <option value="light" ${s.mode === "light" ? "selected" : ""}>Світлий</option>
       <option value="dark" ${s.mode === "dark" ? "selected" : ""}>Темний</option></select></label></div>
+    <div class="looks">
+      <label class="field">Кути<select id="lookRadius"><option value="sharp" ${s.radius === "sharp" ? "selected" : ""}>Гострі</option><option value="soft" ${!s.radius || s.radius === "soft" ? "selected" : ""}>М'які</option><option value="round" ${s.radius === "round" ? "selected" : ""}>Круглі</option></select></label>
+      <label class="field">Щільність<select id="lookDensity"><option value="cozy" ${s.density !== "compact" ? "selected" : ""}>Просторо</option><option value="compact" ${s.density === "compact" ? "selected" : ""}>Компактно</option></select></label>
+      <label class="field">Шрифт<select id="lookFont"><option value="modern" ${!s.font || s.font === "modern" ? "selected" : ""}>Сучасний</option><option value="rounded" ${s.font === "rounded" ? "selected" : ""}>Округлий</option><option value="classic" ${s.font === "classic" ? "selected" : ""}>Класичний</option><option value="mono" ${s.font === "mono" ? "selected" : ""}>Хакерський</option></select></label>
+    </div>
     <div class="skins">${SKINS.map(([id, n, a, b]) => `<button type="button" class="skin" data-act="skin" data-skin="${id}" aria-pressed="${(s.skin || "sea") === id}"><i><b style="background:${a}"></b><b style="background:${b}"></b></i>${n}</button>`).join("")}</div></section>
   <section class="panel"><h2>Режим сесії</h2>
     <p class="muted" style="margin:0">Під час сесії лишаються тільки навчання і звички з позначкою «у сесію теж». Нагадування теж стають м'якшими.</p>
@@ -641,6 +717,7 @@ let ownTheme = false;
 function applyLook() {
   const s = set(), root = document.documentElement;
   root.dataset.skin = s.skin || "sea";
+  root.dataset.radius = s.radius || "soft"; root.dataset.density = s.density || "cozy"; root.dataset.font = s.font || "modern";
   if (s.mode === "light" || s.mode === "dark") { root.dataset.theme = s.mode; ownTheme = true; }
   else if (ownTheme) { delete root.dataset.theme; ownTheme = false; }
   try { localStorage.setItem("kurs.skin", root.dataset.skin); } catch {}
@@ -660,7 +737,7 @@ function render() {
   const qt = $("#qtTitle"), keep = qt ? qt.value : "", hadFocus = document.activeElement === qt;
   const cm = $("#cmdText"), cmdKeep = cm ? cm.value : "", cmdFocus = document.activeElement === cm;
   const coachBusy = $("#coachBox")?.dataset.busy === "1" ? $("#coachBox").innerHTML : null;
-  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, setup: viewSetup }[r]();
+  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, cal: viewCalendar, setup: viewSetup }[r]();
   view.className = r === "habits" ? "" : "cols";
   if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
   if (r === "today" && lastRoute === "today" && $("#cmdText")) { $("#cmdText").value = cmdKeep; if (cmdFocus) $("#cmdText").focus(); }
@@ -669,6 +746,45 @@ function render() {
   lastRoute = r;
   afterRender(r, entering);
   checkLevelUp();
+}
+
+
+let taskFilter = "";
+// ---------- calendar ----------
+const cal = { month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: TODAY() };
+const WD = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
+function viewCalendar() {
+  const m = cal.month, first = weekStart(m), today = TODAY(), mm = m.getMonth();
+  const tasksByDay = {};
+  for (const t of S.tasks) if (t.due) (tasksByDay[t.due] = tasksByDay[t.due] || []).push(t);
+  const cells = [...Array(42)].map((_, i) => {
+    const d = addDays(first, i), k = ymd(d), past = k <= today;
+    const p = past ? Math.round(dayRate(k) * 100) : 0, ts = tasksByDay[k] || [], f = (S.days[k] || {}).focus || 0;
+    const cls = ["day", d.getMonth() !== mm ? "out" : "", k === today ? "today" : "", past && isGood(k) ? "good" : "", p >= 60 ? "hi" : ""].join(" ");
+    return `<button type="button" class="${cls}" style="--p:${Math.round(p * .85)}" data-act="calDay" data-date="${k}" aria-pressed="${cal.sel === k}" aria-label="${fmtDate(k)}: ${p}% звичок, задач ${ts.length}">
+      <b>${d.getDate()}</b><span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}</button>`;
+  }).join("");
+  // month summary
+  const inMonth = [...Array(new Date(m.getFullYear(), mm + 1, 0).getDate())].map((_, i) => ymd(new Date(m.getFullYear(), mm, i + 1)));
+  const passed = inMonth.filter(k => k <= today), good = passed.filter(isGood).length;
+  const focusMin = inMonth.reduce((a, k) => a + ((S.days[k] || {}).focus || 0), 0);
+  const closed = S.tasks.filter(t => t.done && t.doneAt && inMonth.includes(ymd(new Date(t.doneAt)))).length;
+  const avg = passed.length ? Math.round(100 * passed.reduce((a, k) => a + dayRate(k), 0) / passed.length) : 0;
+  // selected day
+  const sel = cal.sel, selPast = sel <= today, selTasks = (tasksByDay[sel] || []).sort(taskSort), dayFocus = (S.days[sel] || {}).focus || 0;
+  const title = new Date(sel + "T12:00:00").toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+  return `<section class="panel span"><div class="cal-head"><h2>${esc(m.toLocaleDateString("uk-UA", { month: "long", year: "numeric" }))}</h2>
+      <div class="actions"><button class="btn ghost" type="button" data-act="calNav" data-d="-1" aria-label="Попередній місяць">‹</button><button class="btn ghost" type="button" data-act="calNav" data-d="0">Сьогодні</button><button class="btn ghost" type="button" data-act="calNav" data-d="1" aria-label="Наступний місяць">›</button></div></div>
+    <div class="cal">${WD.map(w => `<div class="wdn">${w}</div>`).join("")}${cells}</div>
+    <div class="legend"><span><i style="background:color-mix(in srgb, var(--accent) 85%, var(--bg))"></i>більше звичок</span><span><i style="background:var(--brass);border-radius:50%"></i>квест виконано</span><span><i style="background:var(--accent);border-radius:50%;width:8px;height:8px"></i>задачі</span><span>25′ — хвилини фокусу</span></div></section>
+  <section class="panel"><div class="panel-head"><h2 style="text-transform:capitalize">${esc(title)}</h2>${selPast ? `<span class="eyebrow num">${Math.round(dayRate(sel) * 100)}% · ${dayFocus} хв</span>` : `<span class="eyebrow">попереду</span>`}</div>
+    ${selPast ? `<div class="list">${dailyHabits().map(h => habitRow(h, sel)).join("") || `<p class="muted">Звичок немає.</p>`}</div>` : `<p class="muted" style="margin:0">Звички відмічаються в день, коли ти їх робиш. Сюди можна запланувати задачі.</p>`}
+    <h3 style="font-size:14px;margin-top:4px">Задачі на цей день</h3>
+    <div class="list">${selTasks.map(taskRow).join("") || `<p class="muted">Нічого не заплановано.</p>`}</div>
+    <div class="actions"><button class="btn ghost" type="button" data-act="newTaskOn" data-date="${sel}">Додати задачу на цей день</button></div></section>
+  <section class="panel"><div class="panel-head"><h2>Підсумок місяця</h2></div>
+    <div class="sumgrid"><div><b class="num">${good}/${passed.length}</b><span>днів з виконаним квестом</span></div><div><b class="num">${avg}%</b><span>середнє виконання звичок</span></div>
+    <div><b class="num">${closed}</b><span>задач закрито</span></div><div><b class="num">${focusMin}</b><span>хвилин фокусу</span></div></div></section>`;
 }
 
 // ---------- dialogs ----------
@@ -684,9 +800,9 @@ function openDialog(html, onSave, onDelete) {
   dlg.showModal();
   form.querySelector("input,select,textarea")?.focus();
 }
-function taskDialog(t) {
+function taskDialog(t, due) {
   const isNew = !t;
-  t = t || { title: "", area: "study", due: TODAY(), priority: "normal", notes: "" };
+  t = t || { title: "", area: "study", due: due || TODAY(), priority: "normal", notes: "" };
   openDialog(`<h2>${isNew ? "Нова задача" : "Задача"}</h2>
     <label class="field">Що зробити<input type="text" name="title" value="${esc(t.title)}" required></label>
     <div class="grid2"><label class="field">Напрям<select name="area">${areaOptions(t.area)}</select></label>
@@ -1054,7 +1170,11 @@ async function engInit() {
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const id = b.dataset.id, act = b.dataset.act;
-  if (act === "habit") toggleHabit(id);
+  if (act === "habit") toggleHabit(id, b.dataset.date || TODAY());
+  if (act === "calDay") { cal.sel = b.dataset.date; render(); }
+  if (act === "calNav") { const n = Number(b.dataset.d); cal.month = n ? new Date(cal.month.getFullYear(), cal.month.getMonth() + n, 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1); if (!n) cal.sel = TODAY(); render(); }
+  if (act === "newTaskOn") taskDialog(null, b.dataset.date);
+  if (act === "tfilter") { taskFilter = b.dataset.area || ""; render(); }
   if (act === "task") { const t = S.tasks.find(x => x.id === id); if (t) toggleTask(t); }
   if (act === "editTask") taskDialog(S.tasks.find(x => x.id === id));
   if (act === "newTask") taskDialog(null);
@@ -1082,6 +1202,9 @@ document.addEventListener("change", e => {
   const el = e.target;
   if (el.id === "engTopic") eng.topic = el.value;
   if (el.id === "lookMode") saveSettings({ mode: el.value });
+  if (el.id === "lookRadius") saveSettings({ radius: el.value });
+  if (el.id === "lookDensity") saveSettings({ density: el.value });
+  if (el.id === "lookFont") saveSettings({ font: el.value });
   if (el.id === "tone") saveSettings({ tone: el.value });
   if (el.id === "pName") saveSettings({ name: el.value.trim() });
   if (el.id === "pAbout") saveSettings({ about: el.value.trim() });
@@ -1103,6 +1226,14 @@ document.addEventListener("submit", e => {
   toast("Задачу додано");
 });
 addEventListener("hashchange", render);
+// Shortcuts: 1-6 switch tabs, N adds a task, F starts 25 min of focus (never while typing or in a dialog).
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, dialog")) return;
+  const tabs = ["today", "tasks", "habits", "goals", "cal", "setup"], i = "123456".indexOf(e.key);
+  if (i >= 0) { location.hash = "#" + tabs[i]; e.preventDefault(); }
+  else if (e.key === "n" || e.key === "т") { taskDialog(null); e.preventDefault(); }
+  else if ((e.key === "f" || e.key === "а") && !(focus.endAt > Date.now())) { focusStart(25); e.preventDefault(); }
+});
 document.addEventListener("keydown", e => { if (e.target.id === "engText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); engSend(); } });
 document.addEventListener("keydown", e => { if (e.target.id === "cmdText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#askBox").requestSubmit(); } });
 

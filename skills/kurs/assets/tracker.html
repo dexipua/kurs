@@ -219,6 +219,13 @@
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
+  .journal textarea { min-height: 110px; resize: vertical; font: 400 15px/1.5 var(--body); }
+  .journal .ask { margin: 0; font-style: italic; color: var(--muted); }
+  .moods { display: flex; gap: 6px; flex-wrap: wrap; }
+  .moods .chip-btn { font-size: 18px; padding: 3px 9px; }
+  .jentry { background: var(--soft); border-radius: calc(var(--r) * .6); padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .jentry small { display: block; color: var(--muted); font: 500 11px var(--mono); margin-bottom: 4px; }
+  .day .mood { position: absolute; bottom: 3px; right: 4px; font-size: 11px; line-height: 1; }
   .principle .quote { margin: 0; font: 600 17px/1.45 var(--body); }
   #eng { width: min(640px, calc(100vw - 24px)); padding: 16px; }
   .engwrap { display: grid; gap: 10px; }
@@ -321,7 +328,7 @@ const DEFAULT_AREAS = [
 const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"]];
 const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", radius: "soft", density: "cozy", font: "modern", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
-const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, settings: null, loaded: new Set(), readOnly: false };
+const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, settings: null, loaded: new Set(), readOnly: false };
 let db = null, sample = null;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -563,6 +570,7 @@ function viewToday() {
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
   ${focusPanel()}
   ${principlePanel()}
+  ${journalPanel()}
   ${sample ? englishPanel() : ""}
   <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><a href="#tasks" class="eyebrow">усі задачі →</a></div>
     <div class="list">${tt.map(taskRow).join("") || `<p class="muted">На сьогодні задач немає.</p>`}</div>
@@ -736,12 +744,14 @@ function render() {
   // keep typed text in the quick-add field across live updates
   const qt = $("#qtTitle"), keep = qt ? qt.value : "", hadFocus = document.activeElement === qt;
   const cm = $("#cmdText"), cmdKeep = cm ? cm.value : "", cmdFocus = document.activeElement === cm;
+  const jt = $("#jText"), jFocus = document.activeElement === jt ? [jt.selectionStart, jt.selectionEnd] : null;
   const coachBusy = $("#coachBox")?.dataset.busy === "1" ? $("#coachBox").innerHTML : null;
   view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, cal: viewCalendar, setup: viewSetup }[r]();
   view.className = r === "habits" ? "" : "cols";
   if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
   if (r === "today" && lastRoute === "today" && $("#cmdText")) { $("#cmdText").value = cmdKeep; if (cmdFocus) $("#cmdText").focus(); }
   if (coachBusy && $("#coachBox")) { $("#coachBox").innerHTML = coachBusy; $("#coachBox").dataset.busy = "1"; }
+  if (jFocus && $("#jText")) { $("#jText").focus(); $("#jText").setSelectionRange(...jFocus); }
   const entering = r !== lastRoute;
   lastRoute = r;
   afterRender(r, entering);
@@ -750,6 +760,33 @@ function render() {
 
 
 let taskFilter = "";
+// ---------- journal: one entry per day in journal/<date> ----------
+const MOODS = ["😞", "😕", "😐", "🙂", "😄"];
+const JPROMPTS = ["Що сьогодні вийшло найкраще?", "Чого я сьогодні навчився?", "Що забрало найбільше енергії і чому?",
+  "За що я сьогодні вдячний?", "Що зроблю завтра інакше?", "Який момент дня запам'ятаю?", "Що мене сьогодні здивувало в людях?",
+  "Де я сьогодні відклав щось важливе?", "Що зробило мене ближчим до моєї мети?", "Кому я сьогодні допоміг або хто допоміг мені?"];
+const jDraft = {};
+const journalHabit = () => S.habits.find(h => h.active !== false && /щоденник|journal/i.test(h.title || ""));
+function journalPanel(date = TODAY()) {
+  const e = S.journal[date] || {}, d = jDraft[date] || {}, mood = d.mood ?? e.mood, text = d.text ?? e.text ?? "";
+  const ask = JPROMPTS[Number(date.replaceAll("-", "")) % JPROMPTS.length], h = journalHabit();
+  const past = Object.values(S.journal).filter(j => j.date !== date && j.text).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
+  return `<section class="panel journal"><div class="panel-head"><h2>Щоденник</h2>${e.text ? `<span class="quest-done">ЗАПИСАНО</span>` : `<span class="eyebrow">${h ? "звичка · " : ""}5 хв</span>`}</div>
+    <div class="moods" role="group" aria-label="Настрій">${MOODS.map((m, i) => `<button type="button" class="chip-btn" data-act="jMood" data-date="${date}" data-m="${i + 1}" aria-pressed="${mood === i + 1}" aria-label="Настрій ${i + 1} з 5">${m}</button>`).join("")}</div>
+    <p class="ask">${esc(ask)}</p>
+    <textarea id="jText" data-date="${date}" aria-label="Запис у щоденник" placeholder="Кілька речень про день. Ніхто, крім тебе, цього не побачить.">${esc(text)}</textarea>
+    <div class="actions"><button class="btn primary" type="button" data-act="jSave" data-date="${date}">${e.text ? "Оновити запис" : "Зберегти запис"}</button></div>
+    ${past.length && date === TODAY() ? `<details><summary>Попередні записи: ${past.length}</summary><div style="display:grid;gap:8px;margin-top:10px">${past.map(j => `<div class="jentry"><small>${fmtDate(j.date)} ${j.mood ? MOODS[j.mood - 1] : ""}</small>${esc(j.text)}</div>`).join("")}</div></details>` : ""}</section>`;
+}
+function saveJournal(date) {
+  const e = S.journal[date] || {}, d = jDraft[date] || {}, text = (d.text ?? e.text ?? "").trim(), mood = d.mood ?? e.mood ?? null;
+  if (!text && !mood) { toast("Напиши хоч речення або обери настрій"); return; }
+  const doc = { date, text, mood, at: new Date().toISOString() };
+  S.journal = { ...S.journal, [date]: doc }; delete jDraft[date];
+  write("journal/" + date, () => db.doc("journal/" + date).set(doc));
+  const h = journalHabit();
+  if (h && text && !doneOn(date, h.id)) toggleHabit(h.id, date); else { toast("Запис збережено"); render(); }
+}
 // ---------- calendar ----------
 const cal = { month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: TODAY() };
 const WD = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
@@ -762,7 +799,7 @@ function viewCalendar() {
     const p = past ? Math.round(dayRate(k) * 100) : 0, ts = tasksByDay[k] || [], f = (S.days[k] || {}).focus || 0;
     const cls = ["day", d.getMonth() !== mm ? "out" : "", k === today ? "today" : "", past && isGood(k) ? "good" : "", p >= 60 ? "hi" : ""].join(" ");
     return `<button type="button" class="${cls}" style="--p:${Math.round(p * .85)}" data-act="calDay" data-date="${k}" aria-pressed="${cal.sel === k}" aria-label="${fmtDate(k)}: ${p}% звичок, задач ${ts.length}">
-      <b>${d.getDate()}</b><span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}</button>`;
+      <b>${d.getDate()}</b><span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}${(S.journal[k] || {}).mood ? `<span class="mood" aria-hidden="true">${MOODS[S.journal[k].mood - 1]}</span>` : ""}</button>`;
   }).join("");
   // month summary
   const inMonth = [...Array(new Date(m.getFullYear(), mm + 1, 0).getDate())].map((_, i) => ymd(new Date(m.getFullYear(), mm, i + 1)));
@@ -782,6 +819,7 @@ function viewCalendar() {
     <h3 style="font-size:14px;margin-top:4px">Задачі на цей день</h3>
     <div class="list">${selTasks.map(taskRow).join("") || `<p class="muted">Нічого не заплановано.</p>`}</div>
     <div class="actions"><button class="btn ghost" type="button" data-act="newTaskOn" data-date="${sel}">Додати задачу на цей день</button></div></section>
+  ${selPast ? journalPanel(sel) : ""}
   <section class="panel"><div class="panel-head"><h2>Підсумок місяця</h2></div>
     <div class="sumgrid"><div><b class="num">${good}/${passed.length}</b><span>днів з виконаним квестом</span></div><div><b class="num">${avg}%</b><span>середнє виконання звичок</span></div>
     <div><b class="num">${closed}</b><span>задач закрито</span></div><div><b class="num">${focusMin}</b><span>хвилин фокусу</span></div></div></section>`;
@@ -1174,6 +1212,8 @@ document.addEventListener("click", e => {
   if (act === "calDay") { cal.sel = b.dataset.date; render(); }
   if (act === "calNav") { const n = Number(b.dataset.d); cal.month = n ? new Date(cal.month.getFullYear(), cal.month.getMonth() + n, 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1); if (!n) cal.sel = TODAY(); render(); }
   if (act === "newTaskOn") taskDialog(null, b.dataset.date);
+  if (act === "jMood") { const dt = b.dataset.date; jDraft[dt] = { ...jDraft[dt], mood: Number(b.dataset.m) }; render(); }
+  if (act === "jSave") saveJournal(b.dataset.date);
   if (act === "tfilter") { taskFilter = b.dataset.area || ""; render(); }
   if (act === "task") { const t = S.tasks.find(x => x.id === id); if (t) toggleTask(t); }
   if (act === "editTask") taskDialog(S.tasks.find(x => x.id === id));
@@ -1225,6 +1265,7 @@ document.addEventListener("submit", e => {
   write("tasks/" + ref.id, () => ref.set({ title, area: "study", due: null, priority: "normal", notes: "", done: false, createdAt: new Date().toISOString() }));
   toast("Задачу додано");
 });
+document.addEventListener("input", e => { if (e.target.id === "jText") { const dt = e.target.dataset.date; jDraft[dt] = { ...jDraft[dt], text: e.target.value }; } });
 addEventListener("hashchange", render);
 // Shortcuts: 1-6 switch tabs, N adds a task, F starts 25 min of focus (never while typing or in a dialog).
 document.addEventListener("keydown", e => {
@@ -1262,6 +1303,7 @@ render();
   db.collection("days").onSnapshot(snap => {
     const m = {}; snap.docs.forEach(d => { m[d.id] = d.data(); }); S.days = m; got("days", snap);
   }, fail);
+  db.collection("journal").onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { m[d.id] = d.data(); }); S.journal = m; render(); }, fail);
   db.doc("settings/main").onSnapshot(snap => { S.settings = snap.exists ? snap.data() : null; got("settings", snap); }, fail);
 })();
 </script>

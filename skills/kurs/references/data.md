@@ -30,3 +30,7 @@ Exam mode keeps only habits with `area: "study"` or `keepInExams: true`, and onl
 - Weekly: тренування 3× 45 хв (body), задача на LeetCode 2× (career), 10 хв без телефона 3× (mind), поспілкуватися з другом 2× (life), приготувати щось нове 1× (life).
 - Goals: one big goal for the next 6–9 months split into 5–8 steps; a reading goal listing the actual books; a 12-week body goal; «сильна сесія» for students.
 - Tasks: small first steps with due dates in the next 1–3 weeks, so the first days already have something to close.
+
+## roadmap/<id>
+
+Optional internship map. `{order: number, title, when: string, why: string, items: [{t, done}]}`. Stages render in `order`; the first stage with an unfinished item is the current one.

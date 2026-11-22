@@ -219,6 +219,20 @@
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
+  .rm { list-style: none; margin: 0; padding: 0; display: grid; }
+  .rm-stage { display: grid; grid-template-columns: 34px 1fr; gap: 12px; position: relative; padding-bottom: 18px; }
+  .rm-stage:not(:last-child)::before { content: ""; position: absolute; left: 16px; top: 36px; bottom: 2px; width: 2px; border-radius: 2px; background: var(--line); }
+  .rm-stage.done::before { background: var(--ok); }
+  .rm-dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--mono); border: 2px solid var(--line); background: var(--surface); color: var(--muted); }
+  .rm-dot svg { width: 16px; height: 16px; }
+  .rm-stage.done .rm-dot { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .rm-stage.now .rm-dot { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent); }
+  .rm-body { min-width: 0; display: grid; gap: 6px; padding-top: 6px; }
+  .rm-body h3 { font: 600 14px/1.3 var(--display); overflow-wrap: anywhere; }
+  .rm-body p { margin: 0; font-size: 14px; }
+  .rm-here { justify-self: start; font: 700 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); border-radius: 99px; padding: 3px 8px; }
+  .rm-stage.next .rm-body h3 { color: var(--muted); }
+  .rm-mini { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
   .med { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: grid; place-content: center; justify-items: center; gap: 20px; padding: 24px 16px; text-align: center; }
   .med-orb { width: min(64vw, 260px); aspect-ratio: 1; border-radius: 50%; transform: scale(.55); transition: transform 4s ease-in-out;
     background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--accent) 60%, transparent), color-mix(in srgb, var(--accent) 15%, transparent)); }
@@ -335,7 +349,7 @@ const DEFAULT_AREAS = [
 const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"]];
 const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", radius: "soft", density: "cozy", font: "modern", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
-const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, settings: null, loaded: new Set(), readOnly: false };
+const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, roadmap: [], settings: null, loaded: new Set(), readOnly: false };
 let db = null, sample = null;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -424,6 +438,7 @@ function computeGame() {
     if (isGood(date)) add(null, XP.quest);
   }
   for (const t of S.tasks) if (t.done) { add(t.area, XP.task(t)); tasksDone++; }
+  for (const x of S.roadmap) for (const it of x.items || []) if (it.done) add("career", XP.step);
   for (const g of S.goals) { for (const s of g.steps || []) if (s.done) add(g.area, XP.step); if ((g.steps || []).length && goalProgress(g) === 100) goalsDone++; }
   let lvl = 1, need = 100, into = total;
   while (into >= need) { into -= need; lvl++; need = 100 * lvl; }
@@ -579,6 +594,7 @@ function viewToday() {
   <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
     <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
+  ${roadmapMini()}
   ${focusPanel()}
   ${medPanel()}
   ${principlePanel()}
@@ -635,9 +651,40 @@ function viewHabits() {
     </div>`).join("") || `<p class="muted">Поки порожньо.</p>`}</div></section>`;
 }
 
+// ---------- internship map: ordered stages in roadmap/<id> {order, title, when, why, items:[{t, done}]} ----------
+const rmOpen = new Set();
+const rmStages = () => [...S.roadmap].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+const rmCurrent = st => { const i = st.findIndex(x => (x.items || []).some(it => !it.done)); return i < 0 ? st.length : i; };
+function roadmapPanel() {
+  const st = rmStages(); if (!st.length) return "";
+  const cur = rmCurrent(st), all = st.flatMap(x => x.items || []), dn = all.filter(i => i.done).length, pct = all.length ? Math.round(100 * dn / all.length) : 0;
+  return `<section class="panel span" id="map"><div class="panel-head"><h2>Карта стажування</h2><span class="eyebrow num">${dn}/${all.length} · ${pct}%</span></div>
+    <p class="muted" style="margin:0">Шлях до літнього стажування 2027, етап за етапом. Кожен крок — +${XP.step} досвіду.</p>
+    <div class="bar"><span style="width:${pct}%"></span></div>
+    <ol class="rm">${st.map((x, k) => { const its = x.items || [], d = its.filter(i => i.done).length, state = k < cur ? "done" : k === cur ? "now" : "next";
+      return `<li class="rm-stage ${state}"><div class="rm-dot" aria-hidden="true">${state === "done" ? CHECK : k + 1}</div><div class="rm-body">
+        <div class="panel-head"><h3>${esc(x.title)}</h3><span class="eyebrow">${esc(x.when || "")}</span></div>
+        ${state === "now" ? `<span class="rm-here">ти тут</span>` : ""}${x.why ? `<p class="muted">${esc(x.why)}</p>` : ""}
+        <details data-rm="${esc(x.id)}" ${state === "now" || rmOpen.has(x.id) ? "open" : ""}><summary>${d} з ${its.length} кроків</summary>
+          <ul class="steps" style="margin-top:8px">${its.map((it, i) => `<li class="${it.done ? "done" : ""}"><button class="check ${it.done ? "on" : ""}" data-act="rmStep" data-id="${esc(x.id)}" data-i="${i}" aria-pressed="${!!it.done}" aria-label="Крок: ${esc(it.t)}">${it.done ? CHECK : ""}</button><span>${esc(it.t)}</span></li>`).join("")}</ul></details>
+      </div></li>`; }).join("")}</ol></section>`;
+}
+function roadmapMini() {
+  const st = rmStages(); if (!st.length) return "";
+  const cur = rmCurrent(st), x = st[Math.min(cur, st.length - 1)], next = (x.items || []).find(i => !i.done);
+  return `<section class="panel"><a class="rm-mini" href="#goals"><div style="min-width:0"><div class="eyebrow">Карта стажування · етап ${Math.min(cur + 1, st.length)} з ${st.length}</div>
+    <div style="margin-top:6px;overflow-wrap:anywhere">${next ? `Наступний крок: ${esc(next.t)}` : "Усі етапи пройдено!"}</div></div><span aria-hidden="true">→</span></a></section>`;
+}
+function toggleRm(x, i) {
+  const items = (x.items || []).map((it, j) => j === i ? { ...it, done: !it.done } : it);
+  if (items[i] && items[i].done) { popId = x.id; popUntil = Date.now() + 450; toast(`+${XP.step} досвіду · Майстерність`); }
+  rmOpen.add(x.id); x.items = items; render();
+  write("roadmap/" + x.id, () => db.doc("roadmap/" + x.id).update({ items }));
+}
+
 function viewGoals() {
   const gs = [...S.goals].sort((a, b) => (a.deadline || "9999").localeCompare(b.deadline || "9999"));
-  return `<section class="panel span"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
+  return `${roadmapPanel()}<section class="panel span"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
     <p class="muted" style="margin:0">Ціль розбита на кроки. Прогрес рахується за виконаними кроками.</p></section>
   ${gs.map(g => { const p = goalProgress(g); return `<section class="panel">
     <div class="panel-head"><h2>${esc(g.title)}</h2><button class="icon-btn" data-act="editGoal" data-id="${esc(g.id)}" aria-label="Редагувати ціль">✎</button></div>
@@ -1298,6 +1345,7 @@ document.addEventListener("click", e => {
   if (act === "editHabit") habitDialog(S.habits.find(x => x.id === id));
   if (act === "newGoal") goalDialog(null);
   if (act === "editGoal") goalDialog(S.goals.find(x => x.id === id));
+  if (act === "rmStep") { const x = S.roadmap.find(r => r.id === id); if (x) toggleRm(x, Number(b.dataset.i)); }
   if (act === "step") { const g = S.goals.find(x => x.id === id); if (g) toggleStep(g, Number(b.dataset.i)); }
   if (act === "exam") saveSettings({ examMode: !set().examMode });
   if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
@@ -1342,6 +1390,7 @@ document.addEventListener("submit", e => {
   toast("Задачу додано");
 });
 document.addEventListener("input", e => { if (e.target.id === "jText") { const dt = e.target.dataset.date; jDraft[dt] = { ...jDraft[dt], text: e.target.value }; } });
+document.addEventListener("toggle", e => { const id = e.target.dataset && e.target.dataset.rm; if (id) { if (e.target.open) rmOpen.add(id); else rmOpen.delete(id); } }, true);
 addEventListener("hashchange", render);
 // Shortcuts: 1-6 switch tabs, N adds a task, F starts 25 min of focus (never while typing or in a dialog).
 document.addEventListener("keydown", e => {
@@ -1375,6 +1424,7 @@ render();
   db.collection("habits").onSnapshot(list("habits"), fail);
   db.collection("tasks").onSnapshot(list("tasks"), fail);
   db.collection("goals").onSnapshot(list("goals"), fail);
+  db.collection("roadmap").onSnapshot(list("roadmap"), fail);
   db.collection("notes").orderBy("at", "desc").limit(10).onSnapshot(list("notes"), fail);
   // All days: total XP needs the whole history (about 365 small documents a year).
   db.collection("days").onSnapshot(snap => {

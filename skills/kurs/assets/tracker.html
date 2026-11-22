@@ -219,6 +219,14 @@
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
+  .wins { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
+  .wins li { overflow-wrap: anywhere; }
+  .wins li::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+  .delta { font-style: normal; font-weight: 600; }
+  .delta.up { color: var(--ok); }
+  .delta.down { color: var(--warn); }
+  .main-quest { border: 2px solid var(--brass); background: linear-gradient(135deg, color-mix(in srgb, var(--brass) 12%, var(--surface)), var(--surface) 60%); }
+  .mq-title { font: 600 17px/1.3 var(--display); overflow-wrap: anywhere; }
   .rm { list-style: none; margin: 0; padding: 0; display: grid; }
   .rm-stage { display: grid; grid-template-columns: 34px 1fr; gap: 12px; position: relative; padding-bottom: 18px; }
   .rm-stage:not(:last-child)::before { content: ""; position: absolute; left: 16px; top: 36px; bottom: 2px; width: 2px; border-radius: 2px; background: var(--line); }
@@ -522,7 +530,7 @@ function toggleTask(t) {
   write("tasks/" + t.id, () => db.doc("tasks/" + t.id).update({ done, doneAt: done ? new Date().toISOString() : null }));
 }
 function toggleStep(g, i) {
-  const steps = (g.steps || []).map((s, j) => j === i ? { ...s, done: !s.done } : s);
+  const steps = (g.steps || []).map((s, j) => j === i ? { ...s, done: !s.done, at: s.done ? null : new Date().toISOString() } : s);
   if (steps[i] && steps[i].done) { popId = g.id; popUntil = Date.now() + 450; }
   g.steps = steps; render();
   write("goals/" + g.id, () => db.doc("goals/" + g.id).update({ steps }));
@@ -580,6 +588,37 @@ function latestCoach() {
 }
 
 const lateNight = () => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 30 && m < DAY_START_HOUR * 60; };
+// ---------- wins: what this week added, against last week ----------
+const dayOf = iso => ymd(new Date(new Date(iso).getTime() - DAY_START_HOUR * 3600000));
+function weekStats(ws) {
+  const days = [...Array(7)].map((_, i) => ymd(addDays(ws, i))), from = days[0], to = days[6];
+  const inW = iso => { if (!iso) return false; const d = dayOf(iso); return d >= from && d <= to; };
+  const marks = days.reduce((a, d) => a + Object.keys((S.days[d] || {}).done || {}).filter(k => k !== "penalty").length, 0);
+  const focus = days.reduce((a, d) => a + ((S.days[d] || {}).focus || 0), 0);
+  const tasks = S.tasks.filter(t => t.done && inW(t.doneAt));
+  const steps = [...S.goals.flatMap(g => g.steps || []), ...S.roadmap.flatMap(x => x.items || [])].filter(x => x.done && inW(x.at));
+  return { marks, focus, tasks, steps };
+}
+function winsPanel() {
+  const ws = weekStart(NOW()), a = weekStats(ws), b = weekStats(addDays(ws, -7));
+  const tile = (v, pv, label) => { const d = v - pv; return `<div><b class="num">${v}${d ? ` <em class="delta ${d > 0 ? "up" : "down"}" title="порівняно з минулим тижнем">${d > 0 ? "↑" : "↓"}${Math.abs(d)}</em>` : ""}</b><span>${label}</span></div>`; };
+  const wins = [...a.tasks.map(t => ({ t: t.title, at: t.doneAt })), ...a.steps.map(x => ({ t: x.t, at: x.at }))].sort((x, y) => (y.at || "").localeCompare(x.at || "")).slice(0, 8);
+  const first = Object.keys(S.days).sort()[0], since = first ? Math.round((new Date(TODAY()) - new Date(first)) / 864e5) + 1 : 0;
+  const allMarks = Object.values(S.days).reduce((n, d) => n + Object.keys(d.done || {}).filter(k => k !== "penalty").length, 0);
+  return `<section class="panel"><div class="panel-head"><h2>Мої перемоги</h2><span class="eyebrow">цей тиждень · ↑↓ до минулого</span></div>
+    <div class="sumgrid">${tile(a.marks, b.marks, "відміток звичок")}${tile(a.tasks.length, b.tasks.length, "задач закрито")}${tile(a.steps.length, b.steps.length, "кроків цілей і карти")}${tile(a.focus, b.focus, "хвилин фокусу")}</div>
+    ${wins.length ? `<ul class="wins">${wins.map(w => `<li>${esc(w.t)}</li>`).join("")}</ul>` : `<p class="muted" style="margin:0">Закрий задачу або крок цілі, і він з'явиться тут.</p>`}
+    ${since ? `<p class="muted" style="margin:0">За ${since} дн. шляху: ${allMarks} відміток звичок, ${S.tasks.filter(t => t.done).length} закритих задач, рівень ${game().lvl}. Маленькі кроки складаються у велику відстань.</p>` : ""}</section>`;
+}
+// ---------- main quest: one goal pinned on top of Today ----------
+function mainQuestPanel() {
+  const g = S.goals.find(x => x.id === set().mainQuest); if (!g) return "";
+  const p = goalProgress(g), i = (g.steps || []).findIndex(x => !x.done), next = i >= 0 ? g.steps[i] : null;
+  const left = g.deadline ? Math.ceil((new Date(g.deadline) - new Date(TODAY())) / 864e5) : null;
+  return `<section class="panel main-quest span"><div class="panel-head"><h2>Головний квест</h2><span class="eyebrow num">${p}%${left !== null ? ` · ${left >= 0 ? `ще ${left} дн.` : "час вийшов"}` : ""}</span></div>
+    <div class="mq-title">${esc(g.title)}</div><div class="bar"><span style="width:${p}%"></span></div>
+    ${next ? `<ul class="steps"><li><button class="check" data-act="step" data-id="${esc(g.id)}" data-i="${i}" aria-pressed="false" aria-label="Крок: ${esc(next.t)}"></button><span><b>Наступний крок:</b> ${esc(next.t)}</span></li></ul>` : `<p style="margin:0">Квест пройдено! Обери наступний головний квест у «Цілях».</p>`}</section>`;
+}
 function viewToday() {
   const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
@@ -589,6 +628,7 @@ function viewToday() {
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
   ${statusPanel()}
+  ${mainQuestPanel()}
   ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
     <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
     <div class="list">${habitRow({ id: "penalty", title: "20 хв ходьби або 30 віджимань", area: "body" })}</div></section>` : ""}
@@ -596,6 +636,7 @@ function viewToday() {
   <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
     <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
+  ${winsPanel()}
   ${roadmapMini()}
   ${focusPanel()}
   ${medPanel()}
@@ -678,7 +719,7 @@ function roadmapMini() {
     <div style="margin-top:6px;overflow-wrap:anywhere">${next ? `Наступний крок: ${esc(next.t)}` : "Усі етапи пройдено!"}</div></div><span aria-hidden="true">→</span></a></section>`;
 }
 function toggleRm(x, i) {
-  const items = (x.items || []).map((it, j) => j === i ? { ...it, done: !it.done } : it);
+  const items = (x.items || []).map((it, j) => j === i ? { ...it, done: !it.done, at: it.done ? null : new Date().toISOString() } : it);
   if (items[i] && items[i].done) { popId = x.id; popUntil = Date.now() + 450; toast(`+${XP.step} досвіду · Майстерність`); }
   rmOpen.add(x.id); x.items = items; render();
   write("roadmap/" + x.id, () => db.doc("roadmap/" + x.id).update({ items }));
@@ -689,7 +730,7 @@ function viewGoals() {
   return `${roadmapPanel()}<section class="panel span"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
     <p class="muted" style="margin:0">Ціль розбита на кроки. Прогрес рахується за виконаними кроками.</p></section>
   ${gs.map(g => { const p = goalProgress(g); return `<section class="panel">
-    <div class="panel-head"><h2>${esc(g.title)}</h2><button class="icon-btn" data-act="editGoal" data-id="${esc(g.id)}" aria-label="Редагувати ціль">✎</button></div>
+    <div class="panel-head"><h2>${esc(g.title)}</h2><span style="display:flex;gap:6px;align-items:center"><button type="button" class="chip-btn" data-act="mainQuest" data-id="${esc(g.id)}" aria-pressed="${set().mainQuest === g.id}">${set().mainQuest === g.id ? "★ Головний" : "☆ Головний"}</button><button class="icon-btn" data-act="editGoal" data-id="${esc(g.id)}" aria-label="Редагувати ціль">✎</button></span></div>
     <div class="meta" style="font-size:13px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap">${areaChip(g.area)}${g.deadline ? `<span class="chip">до ${fmtDate(g.deadline)}</span>` : ""}<span class="chip num">${p}%</span></div>
     ${g.why ? `<p class="muted" style="margin:0">${esc(g.why)}</p>` : ""}
     <div class="bar"><span style="width:${p}%"></span></div>
@@ -832,7 +873,7 @@ const jDraft = {};
 const journalHabit = () => S.habits.find(h => h.active !== false && /щоденник|journal/i.test(h.title || ""));
 function journalPanel(date = TODAY()) {
   const e = S.journal[date] || {}, d = jDraft[date] || {}, mood = d.mood ?? e.mood, text = d.text ?? e.text ?? "";
-  const ask = JPROMPTS[Number(date.replaceAll("-", "")) % JPROMPTS.length], h = journalHabit();
+  const ask = new Date(date).getUTCDay() === 0 ? "Що я зробив цього тижня, чого не було тиждень тому?" : JPROMPTS[Number(date.replaceAll("-", "")) % JPROMPTS.length], h = journalHabit();
   const past = Object.values(S.journal).filter(j => j.date !== date && j.text).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
   return `<section class="panel journal"><div class="panel-head"><h2>Щоденник</h2>${e.text ? `<span class="quest-done">ЗАПИСАНО</span>` : `<span class="eyebrow">${h ? "звичка · " : ""}5 хв</span>`}</div>
     <div class="moods" role="group" aria-label="Настрій">${MOODS.map((m, i) => `<button type="button" class="chip-btn" data-act="jMood" data-date="${date}" data-m="${i + 1}" aria-pressed="${mood === i + 1}" aria-label="Настрій ${i + 1} з 5">${m}</button>`).join("")}</div>
@@ -1349,6 +1390,7 @@ document.addEventListener("click", e => {
   if (act === "editGoal") goalDialog(S.goals.find(x => x.id === id));
   if (act === "rmStep") { const x = S.roadmap.find(r => r.id === id); if (x) toggleRm(x, Number(b.dataset.i)); }
   if (act === "step") { const g = S.goals.find(x => x.id === id); if (g) toggleStep(g, Number(b.dataset.i)); }
+  if (act === "mainQuest") saveSettings({ mainQuest: set().mainQuest === id ? null : id });
   if (act === "exam") saveSettings({ examMode: !set().examMode });
   if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
   if (act === "delArea") { const l = [...areas()]; l.splice(Number(b.dataset.i), 1); saveSettings({ areas: l }); }

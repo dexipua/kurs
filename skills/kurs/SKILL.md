@@ -72,6 +72,7 @@ The Today tab has one box where the user types a request or a question. The page
 - «Щоденник» panel (Today tab): mood 1–5, a daily prompt, free text, last 7 entries (`journal/<date>`). Saving ticks the first active habit whose title contains «щоденник»/«journal».
 - «Медитація» panel (Today tab): breathing modes calm/box/free, 3/5/10 min, full-screen overlay with an orb, soft bell, Escape to stop. Finishing (or ≥3 min) ticks the first active habit whose title contains «медитац»/«meditat».
 - «Карта стажування» (Goals tab, link on Today): ordered stages from `roadmap/<id>` {order, title, when, why, items:[{t, done}]}; the first stage with an open item is «ти тут»; each item gives step XP.
+- «Головний квест» (`settings/main.mainQuest` = goal id, set with ☆ on a goal card) is pinned on Today; «Мої перемоги» compares this week with last (habit marks, tasks by doneAt, goal/map steps by their `at`, focus minutes). Past ⚡/🎲 bonus tasks expire instead of turning overdue.
 - `settings/main` also holds `radius` (sharp | soft | round), `density` (cozy | compact), `font` (modern | rounded | classic | mono), and `skin` now has 12 values (sea, forest, sunset, violet, sakura, mono, neon, sand, lavender, coffee, aurora, ruby).
 
 ## Game layer (computed in the page, nothing extra is stored)

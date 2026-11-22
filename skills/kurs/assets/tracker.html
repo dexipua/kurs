@@ -219,6 +219,13 @@
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
+  .med { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: grid; place-content: center; justify-items: center; gap: 20px; padding: 24px 16px; text-align: center; }
+  .med-orb { width: min(64vw, 260px); aspect-ratio: 1; border-radius: 50%; transform: scale(.55); transition: transform 4s ease-in-out;
+    background: radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--accent) 60%, transparent), color-mix(in srgb, var(--accent) 15%, transparent)); }
+  .med-orb.free { animation: medPulse 8s ease-in-out infinite; }
+  @keyframes medPulse { 50% { transform: scale(.75); } }
+  .med-phase { font: 600 26px var(--display); margin: 0; min-height: 1.3em; }
+  .med-left { color: var(--muted); margin: 0; font: 500 14px var(--mono); }
   .journal textarea { min-height: 110px; resize: vertical; font: 400 15px/1.5 var(--body); }
   .journal .ask { margin: 0; font-style: italic; color: var(--muted); }
   .moods { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -569,6 +576,7 @@ function viewToday() {
     <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
   ${focusPanel()}
+  ${medPanel()}
   ${principlePanel()}
   ${journalPanel()}
   ${sample ? englishPanel() : ""}
@@ -1089,6 +1097,65 @@ function focusStop(finished) {
   render();
 }
 
+// ---------- meditation: guided breathing in a full-screen overlay ----------
+const MED_MODES = {
+  calm: { name: "Спокій", hint: "Вдих 4 с, пауза 2, видих 6. Довгий видих заспокоює нервову систему.", steps: [["Вдих", 4], ["Пауза", 2], ["Видих", 6]] },
+  box: { name: "Квадрат", hint: "Вдих, затримка, видих, пауза — по 4 с. Так дихають перед стресовими моментами.", steps: [["Вдих", 4], ["Затримка", 4], ["Видих", 4], ["Пауза", 4]] },
+  free: { name: "Тиша", hint: "Без підказок: спостерігай за диханням. Прийшла думка — помітив і повернувся до вдиху.", steps: [] },
+};
+const med = { endAt: 0, startAt: 0, mode: "calm", tick: null, audio: null, el: null, phase: "", lock: null };
+const medHabit = () => S.habits.find(h => h.active !== false && /медитац|meditat/i.test(h.title || ""));
+function medPanel() {
+  const h = medHabit(), done = h && doneOn(TODAY(), h.id), m = MED_MODES[med.mode];
+  return `<section class="panel"><div class="panel-head"><h2>Медитація</h2>${done ? `<span class="quest-done">ЗРОБЛЕНО</span>` : `<span class="eyebrow">${h ? "звичка · " : ""}дихання</span>`}</div>
+    <div class="moods" role="group" aria-label="Техніка">${Object.entries(MED_MODES).map(([k, x]) => `<button type="button" class="chip-btn" data-act="medMode" data-m="${k}" aria-pressed="${med.mode === k}">${x.name}</button>`).join("")}</div>
+    <p class="muted" style="margin:0">${m.hint}</p>
+    <div class="actions"><button class="btn primary" type="button" data-act="med" data-min="5">5 хв</button><button class="btn ghost" type="button" data-act="med" data-min="3">3 хв</button><button class="btn ghost" type="button" data-act="med" data-min="10">10 хв</button></div></section>`;
+}
+function medBell() {
+  try { const a = med.audio; if (!a) return; [[396, .18], [792, .05]].forEach(([f, v]) => { const o = a.createOscillator(), g = a.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(v, a.currentTime); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + 3); o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + 3); }); } catch {}
+}
+function medStart(min) {
+  if (!min || med.el) return;
+  try { med.audio = med.audio || new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  try { navigator.wakeLock?.request("screen").then(l => { med.lock = l; }, () => {}); } catch {}
+  med.startAt = Date.now(); med.endAt = med.startAt + min * 60000; med.phase = "";
+  const o = document.createElement("div");
+  o.className = "med"; o.setAttribute("role", "dialog"); o.setAttribute("aria-modal", "true"); o.setAttribute("aria-label", "Медитація");
+  o.innerHTML = `<div class="med-orb ${MED_MODES[med.mode].steps.length ? "" : "free"}" id="medOrb" aria-hidden="true"></div>
+    <p class="med-phase" id="medPhase" aria-live="polite"></p><p class="med-left num" id="medLeft"></p>
+    <button class="btn" type="button" data-act="medStop">Завершити</button>`;
+  document.body.append(o); med.el = o; o.querySelector("button").focus();
+  medBell(); clearInterval(med.tick); med.tick = setInterval(medTick, 200); medTick();
+}
+function medTick() {
+  const now = Date.now();
+  if (now >= med.endAt) return medStop(true);
+  $("#medLeft").textContent = fmtLeft(med.endAt - now);
+  const steps = MED_MODES[med.mode].steps;
+  if (!steps.length) { if (!med.phase) $("#medPhase").textContent = med.phase = "Просто дихай"; return; }
+  const cycle = steps.reduce((a, x) => a + x[1], 0);
+  let t = ((now - med.startAt) / 1000) % cycle, i = 0;
+  while (t >= steps[i][1]) t -= steps[i++][1];
+  const [name, sec] = steps[i], key = name + i;
+  if (key === med.phase) return;
+  med.phase = key; $("#medPhase").textContent = name;
+  const orb = $("#medOrb"); orb.style.transitionDuration = sec + "s";
+  if (name === "Вдих") orb.style.transform = "scale(1)"; else if (name === "Видих") orb.style.transform = "scale(.55)";
+}
+function medStop(finished) {
+  if (!med.el) return;
+  clearInterval(med.tick); med.tick = null;
+  const spent = Date.now() - med.startAt;
+  med.el.remove(); med.el = null; med.endAt = 0;
+  try { med.lock?.release(); } catch {} med.lock = null;
+  if (finished) medBell();
+  const h = medHabit();
+  // a session counts when finished, or when stopped after at least 3 minutes
+  if ((finished || spent >= 180000) && h && !doneOn(TODAY(), h.id)) toggleHabit(h.id);
+  else { if (finished) toast("Медитацію завершено"); render(); }
+}
+
 function principlePanel() {
   const [src, text] = principleToday(), h = applyHabit();
   return `<section class="panel principle"><div class="panel-head"><h2>Принцип дня</h2><span class="eyebrow">${esc(src)}</span></div>
@@ -1214,6 +1281,9 @@ document.addEventListener("click", e => {
   if (act === "newTaskOn") taskDialog(null, b.dataset.date);
   if (act === "jMood") { const dt = b.dataset.date; jDraft[dt] = { ...jDraft[dt], mood: Number(b.dataset.m) }; render(); }
   if (act === "jSave") saveJournal(b.dataset.date);
+  if (act === "medMode") { med.mode = b.dataset.m; render(); }
+  if (act === "med") medStart(Number(b.dataset.min));
+  if (act === "medStop") medStop(false);
   if (act === "tfilter") { taskFilter = b.dataset.area || ""; render(); }
   if (act === "task") { const t = S.tasks.find(x => x.id === id); if (t) toggleTask(t); }
   if (act === "editTask") taskDialog(S.tasks.find(x => x.id === id));
@@ -1269,6 +1339,7 @@ document.addEventListener("input", e => { if (e.target.id === "jText") { const d
 addEventListener("hashchange", render);
 // Shortcuts: 1-6 switch tabs, N adds a task, F starts 25 min of focus (never while typing or in a dialog).
 document.addEventListener("keydown", e => {
+  if (med.el) { if (e.key === "Escape") { medStop(false); e.preventDefault(); } return; }
   if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, dialog")) return;
   const tabs = ["today", "tasks", "habits", "goals", "cal", "setup"], i = "123456".indexOf(e.key);
   if (i >= 0) { location.hash = "#" + tabs[i]; e.preventDefault(); }

@@ -70,6 +70,7 @@ The Today tab has one box where the user types a request or a question. The page
 
 - «Календар» tab: a month grid tinted by daily-habit completion, brass dot for a closed daily quest, task dots by area, focus minutes. Selecting a past day lets the user tick that day's habits (writes `days/<that date>`); any day can get a task via «Додати задачу на цей день». A selected past day also shows its diary entry.
 - «Щоденник» panel (Today tab): mood 1–5, a daily prompt, free text, last 7 entries (`journal/<date>`). Saving ticks the first active habit whose title contains «щоденник»/«journal».
+- «Медитація» panel (Today tab): breathing modes calm/box/free, 3/5/10 min, full-screen overlay with an orb, soft bell, Escape to stop. Finishing (or ≥3 min) ticks the first active habit whose title contains «медитац»/«meditat».
 - `settings/main` also holds `radius` (sharp | soft | round), `density` (cozy | compact), `font` (modern | rounded | classic | mono), and `skin` now has 12 values (sea, forest, sunset, violet, sakura, mono, neon, sand, lavender, coffee, aurora, ruby).
 
 ## Game layer (computed in the page, nothing extra is stored)

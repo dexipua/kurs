@@ -75,6 +75,7 @@ The Today tab has one box where the user types a request or a question. The page
 - «Головний квест» (`settings/main.mainQuest` = goal id, set with ☆ on a goal card) is pinned on Today; «Мої перемоги» compares this week with last (habit marks, tasks by doneAt, goal/map steps by their `at`, focus minutes). Past ⚡/🎲 bonus tasks expire instead of turning overdue.
 - Hero panel on Today: `settings/main.vision` headline (editable in Setup), cosmic title by level (COSMOS: пил 1 → квазар 35) with total XP as «маса», and a quote of the day from QUOTES. Six cosmic achievements.
 - «Бібліотека» tab (#library, nav label «Книги»): `books/<id>` {title, author, status: read|reading|want, theme (power|psych|self|philo|money|society|think|tech|other), rating, idea, finishedAt, before}. A book read in the tracker (before=false) gives 100 XP to books; books read before only count toward achievements.
+- Look: skins incl. mastermind/noir/abyss, `settings.bg` (none|stars|glow), `settings.accent` (#rrggbb, text colour on it picked by luminance), `settings.hideToday` (panel keys: hero, status, main, wins, map, focus, med, principle, journal, english).
 - `settings/main` also holds `radius` (sharp | soft | round), `density` (cozy | compact), `font` (modern | rounded | classic | mono), and `skin` now has 12 values (sea, forest, sunset, violet, sakura, mono, neon, sand, lavender, coffee, aurora, ruby).
 
 ## Game layer (computed in the page, nothing extra is stored)

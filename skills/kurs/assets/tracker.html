@@ -218,7 +218,23 @@
   .chip-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 5px 11px; font-size: 13px; color: var(--muted); }
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
+  :root[data-skin="mastermind"] { --bg: #F3F0E8; --soft: #E9E3D4; --line: #DCD3BE; --accent: #1E1A14; --accent-ink: #F3E2B0; --brass: #A8741C }
+  @media (prefers-color-scheme: dark) { :root[data-skin="mastermind"]:not([data-theme="light"]) { --bg: #0A0908; --surface: #14120F; --soft: #1E1B16; --line: #2E2920; --accent: #D4AF37; --accent-ink: #14100A; --brass: #E8D7A0 } }
+  :root[data-skin="mastermind"][data-theme="dark"] { --bg: #0A0908; --surface: #14120F; --soft: #1E1B16; --line: #2E2920; --accent: #D4AF37; --accent-ink: #14100A; --brass: #E8D7A0 }
+  :root[data-skin="noir"] { --bg: #F2F0F0; --soft: #E6E2E2; --line: #D6D0D0; --accent: #9E1B24; --accent-ink: #FFFFFF; --brass: #2B2B2B }
+  @media (prefers-color-scheme: dark) { :root[data-skin="noir"]:not([data-theme="light"]) { --bg: #0B0B0C; --surface: #151517; --soft: #1E1E21; --line: #2D2D31; --accent: #E03A44; --accent-ink: #160305; --brass: #C9C9CF } }
+  :root[data-skin="noir"][data-theme="dark"] { --bg: #0B0B0C; --surface: #151517; --soft: #1E1E21; --line: #2D2D31; --accent: #E03A44; --accent-ink: #160305; --brass: #C9C9CF }
+  :root[data-skin="abyss"] { --bg: #EEF0F5; --soft: #E1E5EE; --line: #D2D8E4; --accent: #2B3A67; --accent-ink: #FFFFFF; --brass: #C07A1A }
+  @media (prefers-color-scheme: dark) { :root[data-skin="abyss"]:not([data-theme="light"]) { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF } }
+  :root[data-skin="abyss"][data-theme="dark"] { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF }
   #view { display: grid; gap: 18px; }
+  :root[data-bg="stars"] body { background-image: radial-gradient(1px 1px at 12% 18%, color-mix(in srgb, var(--ink) 55%, transparent), transparent 60%),
+    radial-gradient(1px 1px at 68% 9%, color-mix(in srgb, var(--ink) 45%, transparent), transparent 60%), radial-gradient(1.5px 1.5px at 85% 42%, color-mix(in srgb, var(--brass) 70%, transparent), transparent 60%),
+    radial-gradient(1px 1px at 33% 61%, color-mix(in srgb, var(--ink) 40%, transparent), transparent 60%), radial-gradient(1px 1px at 52% 83%, color-mix(in srgb, var(--ink) 50%, transparent), transparent 60%),
+    radial-gradient(1.5px 1.5px at 7% 77%, color-mix(in srgb, var(--accent) 60%, transparent), transparent 60%), radial-gradient(1px 1px at 92% 88%, color-mix(in srgb, var(--ink) 45%, transparent), transparent 60%);
+    background-size: 420px 420px; background-attachment: fixed; }
+  :root[data-bg="glow"] body { background-image: radial-gradient(90% 60% at 50% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%); background-attachment: fixed; }
+  .toggles { display: flex; flex-wrap: wrap; gap: 6px; }
   .book { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--line); align-items: start; }
   .book:first-child { border-top: 0; }
   .book-title { font-weight: 600; overflow-wrap: anywhere; }
@@ -380,7 +396,7 @@ const DEFAULT_AREAS = [
   { id: "books", name: "Книги", color: "#B7841B" }, { id: "body", name: "Тіло", color: "#2F7D4F" },
   { id: "mind", name: "Розум", color: "#1D6F80" }, { id: "life", name: "Життя", color: "#B4471F" },
 ];
-const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"]];
+const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"], ["mastermind", "Стратег", "#14120F", "#D4AF37"], ["noir", "Нуар", "#151517", "#E03A44"], ["abyss", "Безодня", "#0D0F17", "#F2A33A"]];
 const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", radius: "soft", density: "cozy", font: "modern", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
 const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, roadmap: [], books: [], settings: null, loaded: new Set(), readOnly: false };
@@ -704,6 +720,8 @@ function heroPanel() {
     <p class="muted" style="margin:0;font-size:14px">${esc(cur[2])}${next ? ` Наступна форма — «${esc(next[1])}» на ${next[0]} рівні.` : ""}</p>
     <blockquote class="quote">«${esc(text)}»<small>${esc(who)}</small></blockquote></section>`;
 }
+const TODAY_PANELS = [["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
+const showP = k => !(set().hideToday || []).includes(k);
 function viewToday() {
   const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
@@ -712,9 +730,9 @@ function viewToday() {
   ${set().examMode ? `<div class="panel exam span"><b>Режим контрольних</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у контрольні теж». Серія не згорить.</span></div>` : ""}
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
-  ${heroPanel()}
-  ${statusPanel()}
-  ${mainQuestPanel()}
+  ${showP("hero") ? heroPanel() : ""}
+  ${showP("status") ? statusPanel() : ""}
+  ${showP("main") ? mainQuestPanel() : ""}
   ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
     <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
     <div class="list">${habitRow({ id: "penalty", title: "20 хв ходьби або 30 віджимань", area: "body" })}</div></section>` : ""}
@@ -722,13 +740,13 @@ function viewToday() {
   <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
     <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
-  ${winsPanel()}
-  ${roadmapMini()}
-  ${focusPanel()}
-  ${medPanel()}
-  ${principlePanel()}
-  ${journalPanel()}
-  ${sample ? englishPanel() : ""}
+  ${showP("wins") ? winsPanel() : ""}
+  ${showP("map") ? roadmapMini() : ""}
+  ${showP("focus") ? focusPanel() : ""}
+  ${showP("med") ? medPanel() : ""}
+  ${showP("principle") ? principlePanel() : ""}
+  ${showP("journal") ? journalPanel() : ""}
+  ${sample && showP("english") ? englishPanel() : ""}
   <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><a href="#tasks" class="eyebrow">усі задачі →</a></div>
     <div class="list">${tt.map(taskRow).join("") || `<p class="muted">На сьогодні задач немає.</p>`}</div>
     ${soon.length ? `<details><summary>Найближчі 3 дні: ${soon.length}</summary><div class="list">${soon.map(taskRow).join("")}</div></details>` : ""}</section>
@@ -896,7 +914,12 @@ function viewSetup() {
       <label class="field">Щільність<select id="lookDensity"><option value="cozy" ${s.density !== "compact" ? "selected" : ""}>Просторо</option><option value="compact" ${s.density === "compact" ? "selected" : ""}>Компактно</option></select></label>
       <label class="field">Шрифт<select id="lookFont"><option value="modern" ${!s.font || s.font === "modern" ? "selected" : ""}>Сучасний</option><option value="rounded" ${s.font === "rounded" ? "selected" : ""}>Округлий</option><option value="classic" ${s.font === "classic" ? "selected" : ""}>Класичний</option><option value="mono" ${s.font === "mono" ? "selected" : ""}>Хакерський</option></select></label>
     </div>
+    <div class="grid2"><label class="field">Фон<select id="lookBg"><option value="none" ${!s.bg || s.bg === "none" ? "selected" : ""}>Чистий</option><option value="stars" ${s.bg === "stars" ? "selected" : ""}>Зорі</option><option value="glow" ${s.bg === "glow" ? "selected" : ""}>Сяйво</option></select></label>
+      <label class="field">Свій колір акценту<span style="display:flex;gap:8px;align-items:center"><input type="color" id="lookAccent" value="${/^#[0-9a-f]{6}$/i.test(s.accent || "") ? s.accent : "#d4af37"}" style="width:56px;height:38px;padding:2px">${s.accent ? `<button class="chip-btn" type="button" data-act="accentReset">Як у темі</button>` : `<span class="muted" style="font-size:13px">зараз як у темі</span>`}</span></label></div>
     <div class="skins">${SKINS.map(([id, n, a, b]) => `<button type="button" class="skin" data-act="skin" data-skin="${id}" aria-pressed="${(s.skin || "sea") === id}"><i><b style="background:${a}"></b><b style="background:${b}"></b></i>${n}</button>`).join("")}</div></section>
+  <section class="panel"><h2>Що показувати на «Сьогодні»</h2>
+    <p class="muted" style="margin:0">Прибери те, чим зараз не користуєшся: сторінка стане коротшою. Звички, задачі й тренер лишаються завжди.</p>
+    <div class="toggles">${TODAY_PANELS.map(([k, n]) => `<button type="button" class="chip-btn" data-act="todayPanel" data-k="${k}" aria-pressed="${showP(k)}">${showP(k) ? "✓ " : ""}${esc(n)}</button>`).join("")}</div></section>
   <section class="panel"><h2>Режим контрольних</h2>
     <p class="muted" style="margin:0">У тиждень контрольних лишаються тільки навчання і звички з позначкою «у контрольні теж». Нагадування теж стають м'якшими.</p>
     <div class="actions"><button class="btn ${s.examMode ? "primary" : "ghost"}" type="button" data-act="exam">${s.examMode ? "Режим контрольних: увімкнено" : "Увімкнути режим контрольних"}</button></div></section>
@@ -970,6 +993,11 @@ function applyLook() {
   const s = set(), root = document.documentElement;
   root.dataset.skin = s.skin || "sea";
   root.dataset.radius = s.radius || "soft"; root.dataset.density = s.density || "cozy"; root.dataset.font = s.font || "modern";
+  root.dataset.bg = s.bg || "none";
+  if (/^#[0-9a-f]{6}$/i.test(s.accent || "")) {
+    const n = parseInt(s.accent.slice(1), 16), lum = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+    root.style.setProperty("--accent", s.accent); root.style.setProperty("--accent-ink", lum > 0.6 ? "#111111" : "#FFFFFF");
+  } else { root.style.removeProperty("--accent"); root.style.removeProperty("--accent-ink"); }
   if (s.mode === "light" || s.mode === "dark") { root.dataset.theme = s.mode; ownTheme = true; }
   else if (ownTheme) { delete root.dataset.theme; ownTheme = false; }
   try { localStorage.setItem("kurs.skin", root.dataset.skin); } catch {}
@@ -1535,6 +1563,8 @@ document.addEventListener("click", e => {
   if (act === "bookRate") { const bk = S.books.find(x => x.id === id), n = Number(b.dataset.n); if (bk) setBook(bk, { rating: bk.rating === n ? null : n }); }
   if (act === "bookStatus") { const bk = S.books.find(x => x.id === id), st = b.dataset.s; if (bk) { setBook(bk, st === "read" ? { status: st, finishedAt: new Date().toISOString() } : { status: st }); if (st === "read") { toast(`Книгу дочитано! +${XP.book} маси`); confetti(30); } } }
   if (act === "libFilter") { libFilter = b.dataset.t || ""; render(); }
+  if (act === "accentReset") saveSettings({ accent: null });
+  if (act === "todayPanel") { const k = b.dataset.k, h = set().hideToday || []; saveSettings({ hideToday: h.includes(k) ? h.filter(x => x !== k) : [...h, k] }); }
   if (act === "mainQuest") saveSettings({ mainQuest: set().mainQuest === id ? null : id });
   if (act === "exam") saveSettings({ examMode: !set().examMode });
   if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
@@ -1558,6 +1588,8 @@ document.addEventListener("change", e => {
   if (el.id === "lookRadius") saveSettings({ radius: el.value });
   if (el.id === "lookDensity") saveSettings({ density: el.value });
   if (el.id === "lookFont") saveSettings({ font: el.value });
+  if (el.id === "lookBg") saveSettings({ bg: el.value });
+  if (el.id === "lookAccent") saveSettings({ accent: el.value });
   if (el.id === "tone") saveSettings({ tone: el.value });
   if (el.id === "pName") saveSettings({ name: el.value.trim() });
   if (el.id === "pAbout") saveSettings({ about: el.value.trim() });

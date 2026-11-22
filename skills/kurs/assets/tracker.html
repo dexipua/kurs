@@ -413,7 +413,9 @@ function missedDaysInRow() {
   for (let i = 0; i < 14 && dailyHabits().length && dayRate(ymd(d)) === 0; i++) { n++; d = addDays(d, -1); }
   return n;
 }
-const openTasks = () => S.tasks.filter(t => !t.done);
+// Daily bonuses («⚡ Челендж дня», «🎲 Фан дня») expire with their day instead of piling up as overdue.
+const isBonus = t => /^(⚡|🎲)/.test(t.title || "");
+const openTasks = () => S.tasks.filter(t => !t.done && !(isBonus(t) && t.due && t.due < TODAY()));
 const taskSort = (a, b) => (a.due || "9999") < (b.due || "9999") ? -1 : (a.due || "9999") > (b.due || "9999") ? 1 : (a.priority === "high" ? -1 : 1);
 // In exam mode the Today view shows study tasks only, matching the reminders.
 const focusTasks = () => openTasks().filter(t => !set().examMode || t.area === "study");
@@ -854,7 +856,7 @@ const WD = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 function viewCalendar() {
   const m = cal.month, first = weekStart(m), today = TODAY(), mm = m.getMonth();
   const tasksByDay = {};
-  for (const t of S.tasks) if (t.due) (tasksByDay[t.due] = tasksByDay[t.due] || []).push(t);
+  for (const t of S.tasks) if (t.due && (t.done || !isBonus(t) || t.due >= TODAY())) (tasksByDay[t.due] = tasksByDay[t.due] || []).push(t);
   const cells = [...Array(42)].map((_, i) => {
     const d = addDays(first, i), k = ymd(d), past = k <= today;
     const p = past ? Math.round(dayRate(k) * 100) : 0, ts = tasksByDay[k] || [], f = (S.days[k] || {}).focus || 0;

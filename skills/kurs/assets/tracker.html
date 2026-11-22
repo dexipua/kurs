@@ -100,7 +100,7 @@
 
   nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line);
     padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
-  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
   nav.tabs a { text-decoration: none; color: var(--muted); display: grid; justify-items: center; gap: 2px; font-size: 11.5px; padding: 6px 2px; border-radius: 10px; }
   nav.tabs a svg { width: 22px; height: 22px; }
   nav.tabs a[aria-current="page"] { color: var(--accent); background: var(--soft); font-weight: 600; }
@@ -219,6 +219,21 @@
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
+  .book { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--line); align-items: start; }
+  .book:first-child { border-top: 0; }
+  .book-title { font-weight: 600; overflow-wrap: anywhere; }
+  .book .meta { font-size: 13px; color: var(--muted); }
+  .book-idea { margin: 4px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+  .book-side { display: flex; align-items: center; gap: 2px; }
+  .stars button { all: unset; cursor: pointer; font-size: 15px; padding: 2px 1px; color: var(--line); }
+  .stars button.on { color: var(--brass); }
+  .stars button:focus-visible { outline: 2px solid var(--accent); border-radius: 4px; }
+  .themes { display: grid; gap: 6px; }
+  .theme-row { display: grid; grid-template-columns: minmax(0, 9em) 1fr auto; gap: 8px; align-items: center; font-size: 13px; }
+  .theme-row i { display: block; height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; }
+  .theme-row i em { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+  nav.tabs a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 420px) { nav.tabs a { font-size: 10px; } }
   .hero { position: relative; overflow: hidden; gap: 10px; border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
     background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), var(--surface); }
   .hero::after { content: ""; position: absolute; right: -40px; top: -40px; width: 150px; height: 150px; border-radius: 50%; pointer-events: none;
@@ -333,12 +348,13 @@
 </div>
 
 <nav class="tabs" aria-label="Розділи"><div>
-  <a href="#today" data-r="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Сьогодні</a>
+  <a href="#today" data-r="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>День</a>
   <a href="#tasks" data-r="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</a>
   <a href="#habits" data-r="habits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Звички</a>
   <a href="#goals" data-r="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Цілі</a>
-  <a href="#cal" data-r="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Календар</a>
-  <a href="#setup" data-r="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Налаштування</a>
+  <a href="#library" data-r="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h4v18H6a2 2 0 0 1-2-2z"/><path d="M10 3h4v18h-4zM15 4.5l3.8-1 3 16.4-3.8 1z"/></svg>Книги</a>
+  <a href="#cal" data-r="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Місяць</a>
+  <a href="#setup" data-r="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Профіль</a>
 </div></nav>
 
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
@@ -367,7 +383,7 @@ const DEFAULT_AREAS = [
 const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"]];
 const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", radius: "soft", density: "cozy", font: "modern", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
-const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, roadmap: [], settings: null, loaded: new Set(), readOnly: false };
+const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, roadmap: [], books: [], settings: null, loaded: new Set(), readOnly: false };
 let db = null, sample = null;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -441,7 +457,7 @@ const todayTasks = () => focusTasks().filter(t => t.due && t.due <= TODAY()).sor
 const goalProgress = g => { const s = g.steps || []; return s.length ? Math.round(100 * s.filter(x => x.done).length / s.length) : 0; };
 
 // ---------- game layer: everything is derived from what is already stored ----------
-const XP = { habit: h => 10 + Math.round((h.minutes || 0) / 3), quest: 30, penalty: 25, task: t => t.priority === "high" ? 40 : 20, step: 50 };
+const XP = { book: 100, habit: h => 10 + Math.round((h.minutes || 0) / 3), quest: 30, penalty: 25, task: t => t.priority === "high" ? 40 : 20, step: 50 };
 const STAT_NAMES = { career: "Майстерність", study: "Інтелект", books: "Мудрість", body: "Сила", mind: "Фокус", life: "Харизма" };
 const rankOf = l => l >= 55 ? "S" : l >= 35 ? "A" : l >= 20 ? "B" : l >= 10 ? "C" : l >= 5 ? "D" : "E";
 let _game = null;
@@ -459,6 +475,7 @@ function computeGame() {
   }
   for (const t of S.tasks) if (t.done) { add(t.area, XP.task(t)); tasksDone++; }
   for (const x of S.roadmap) for (const it of x.items || []) if (it.done) add("career", XP.step);
+  for (const b of S.books) if (b.status === "read" && !b.before) add("books", XP.book);
   for (const g of S.goals) { for (const s of g.steps || []) if (s.done) add(g.area, XP.step); if ((g.steps || []).length && goalProgress(g) === 100) goalsDone++; }
   let lvl = 1, need = 100, into = total;
   while (into >= need) { into -= need; lvl++; need = 100 * lvl; }
@@ -493,6 +510,8 @@ function achievements(g) {
     ["Людина принципів", "10 разів застосувати принцип з книги", habitDays(/принцип/i) >= 10],
     ["Харизма", "300 досвіду в «Житті»", (g.byArea.life || 0) >= 300],
     ["Ранг A", "Досягти 35 рівня", g.lvl >= 35], ["Ранг S", "Досягти 55 рівня", g.lvl >= 55],
+    ["Бібліотекар", "20 прочитаних книжок", S.books.filter(b => b.status === "read").length >= 20],
+    ["Полімат", "Прочитати книжки з 5 різних тем", new Set(S.books.filter(b => b.status === "read").map(b => b.theme)).size >= 5],
     ["Перша зірка", "Стати «Зіркою» (8 рівень)", g.lvl >= 8], ["Горизонт подій", "Стати «Чорною дірою» (27 рівень)", g.lvl >= 27],
     ["Спокійний центр", "7 днів медитації", habitDays(/медитац/i) >= 7], ["Маса росте", "30 днів щоденника", habitDays(/щоденник/i) >= 30],
     ["Квазар", "10 кроків «Карти стажування»", S.roadmap.reduce((n, x) => n + (x.items || []).filter(i => i.done).length, 0) >= 10],
@@ -556,7 +575,7 @@ function saveSettings(patch) {
 }
 
 // ---------- rendering ----------
-const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", cal: "Календар", setup: "Налаштування" };
+const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", library: "Бібліотека", cal: "Календар", setup: "Налаштування" };
 const route = () => (TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "today");
 
 function areaChip(id) { const a = area(id); return `<span class="meta"><span class="dot" style="background:${esc(a.color)}"></span>${esc(a.name)}</span>`; }
@@ -792,6 +811,59 @@ function toggleRm(x, i) {
   write("roadmap/" + x.id, () => db.doc("roadmap/" + x.id).update({ items }));
 }
 
+// ---------- library: books/<id> {title, author, status: read|reading|want, theme, rating, idea, finishedAt, before} ----------
+const THEMES = { power: "Влада і стратегія", psych: "Психологія", self: "Саморозвиток", philo: "Філософія", money: "Гроші й бізнес", society: "Суспільство й історія", think: "Наука й мислення", tech: "Технології", other: "Інше" };
+let libFilter = "";
+function bookRow(b) {
+  const stars = b.status === "read" ? `<span class="stars" role="group" aria-label="Оцінка">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="${(b.rating || 0) >= n ? "on" : ""}" data-act="bookRate" data-id="${esc(b.id)}" data-n="${n}" aria-label="${n} з 5">★</button>`).join("")}</span>` : "";
+  const move = b.status === "want" ? `<button class="chip-btn" type="button" data-act="bookStatus" data-id="${esc(b.id)}" data-s="reading">Почати</button>`
+    : b.status === "reading" ? `<button class="chip-btn" type="button" data-act="bookStatus" data-id="${esc(b.id)}" data-s="read">Дочитав</button>` : "";
+  return `<div class="book"><div style="min-width:0"><div class="book-title">${esc(b.title)}</div>
+    <div class="meta">${b.author ? esc(b.author) + " · " : ""}${esc(THEMES[b.theme] || THEMES.other)}${b.finishedAt ? " · " + fmtDate(b.finishedAt.slice(0, 10)) : ""}</div>
+    ${b.idea ? `<p class="book-idea">💡 ${esc(b.idea)}</p>` : ""}</div>
+    <div class="book-side">${stars}${move}<button class="icon-btn" type="button" data-act="editBook" data-id="${esc(b.id)}" aria-label="Редагувати книгу">✎</button></div></div>`;
+}
+function viewLibrary() {
+  const all = S.books, inF = b => !libFilter || b.theme === libFilter;
+  const read = all.filter(b => b.status === "read"), reading = all.filter(b => b.status === "reading" && inF(b)), want = all.filter(b => b.status === "want" && inF(b));
+  const shown = read.filter(inF).sort((a, b) => (b.finishedAt || "").localeCompare(a.finishedAt || "") || (b.rating || 0) - (a.rating || 0));
+  const counts = Object.keys(THEMES).map(k => [k, read.filter(b => (b.theme || "other") === k).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...counts.map(x => x[1]));
+  const sect = (title, list, note) => list.length ? `<section class="panel"><div class="panel-head"><h2>${title}</h2><span class="eyebrow num">${list.length}</span></div>${note || ""}<div>${list.map(bookRow).join("")}</div></section>` : "";
+  return `<section class="panel span"><div class="panel-head"><h2>Моя бібліотека</h2><button class="btn primary" type="button" data-act="newBook">Додати книгу</button></div>
+    <div class="sumgrid"><div><b class="num">${read.length}</b><span>прочитано</span></div><div><b class="num">${counts.length}</b><span>тем знань</span></div>
+    <div><b class="num">${all.filter(b => b.status === "reading").length}</b><span>читаю зараз</span></div><div><b class="num">${all.filter(b => b.status === "want").length}</b><span>у черзі</span></div></div>
+    <p class="muted" style="margin:0">Кожна дочитана книга — +${XP.book} маси. Книги, прочитані до трекера, рахуються в досягнення.</p></section>
+  ${counts.length ? `<section class="panel"><div class="panel-head"><h2>Карта знань</h2><span class="eyebrow">теми прочитаного</span></div>
+    <div class="themes">${counts.map(([k, n]) => `<button type="button" class="theme-row" data-act="libFilter" data-t="${k}" aria-pressed="${libFilter === k}" style="all:unset;cursor:pointer;display:grid;grid-template-columns:minmax(0,9em) 1fr auto;gap:8px;align-items:center;font-size:13px"><span style="overflow-wrap:anywhere;${libFilter === k ? "font-weight:700;color:var(--accent)" : ""}">${esc(THEMES[k])}</span><i style="display:block;height:8px;border-radius:99px;background:var(--soft);overflow:hidden"><em style="display:block;height:100%;width:${Math.round(100 * n / max)}%;background:var(--accent);border-radius:99px"></em></i><b class="num">${n}</b></button>`).join("")}</div>
+    ${libFilter ? `<button class="chip-btn" type="button" data-act="libFilter" data-t="" style="justify-self:start">Показати всі теми</button>` : ""}</section>` : ""}
+  ${sect("Читаю зараз", reading)}
+  ${sect("Прочитано", shown, `<p class="muted" style="margin:0">Постав оцінку зірками й запиши головну ідею (✎) — так книга стає твоєю.</p>`)}
+  ${sect("Хочу прочитати", want)}`;
+}
+function bookDialog(b) {
+  const isNew = !b;
+  b = b || { title: "", author: "", status: "want", theme: "self", idea: "" };
+  openDialog(`<h2>${isNew ? "Нова книга" : "Книга"}</h2>
+    <label class="field">Назва<input type="text" name="title" value="${esc(b.title)}" required></label>
+    <label class="field">Автор<input type="text" name="author" value="${esc(b.author || "")}"></label>
+    <div class="grid2"><label class="field">Статус<select name="status">${[["want", "Хочу прочитати"], ["reading", "Читаю"], ["read", "Прочитано"]].map(([v, n]) => `<option value="${v}" ${b.status === v ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <label class="field">Тема<select name="theme">${Object.entries(THEMES).map(([v, n]) => `<option value="${v}" ${b.theme === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+    <label class="field">Головна ідея для мене<textarea name="idea" rows="3">${esc(b.idea || "")}</textarea></label>`,
+    fd => {
+      const data = { title: fd.title.trim(), author: fd.author.trim(), status: fd.status, theme: fd.theme, idea: fd.idea.trim() };
+      if (!data.title) return false;
+      if (data.status === "read" && b.status !== "read") data.finishedAt = new Date().toISOString();
+      if (isNew) { const ref = db.collection("books").doc(); write("books/" + ref.id, () => ref.set({ ...data, rating: null, before: false })); }
+      else write("books/" + b.id, () => db.doc("books/" + b.id).update(data));
+    },
+    isNew ? null : () => write("books/" + b.id, () => db.doc("books/" + b.id).delete()));
+}
+function setBook(b, patch) {
+  Object.assign(b, patch); render();
+  write("books/" + b.id, () => db.doc("books/" + b.id).update(patch));
+}
+
 function viewGoals() {
   const gs = [...S.goals].sort((a, b) => (a.deadline || "9999").localeCompare(b.deadline || "9999"));
   return `${roadmapPanel()}<section class="panel span"><div class="panel-head"><h2>Великі цілі</h2><button class="btn primary" type="button" data-act="newGoal">Нова ціль</button></div>
@@ -918,7 +990,7 @@ function render() {
   const cm = $("#cmdText"), cmdKeep = cm ? cm.value : "", cmdFocus = document.activeElement === cm;
   const jt = $("#jText"), jFocus = document.activeElement === jt ? [jt.selectionStart, jt.selectionEnd] : null;
   const coachBusy = $("#coachBox")?.dataset.busy === "1" ? $("#coachBox").innerHTML : null;
-  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, cal: viewCalendar, setup: viewSetup }[r]();
+  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, library: viewLibrary, cal: viewCalendar, setup: viewSetup }[r]();
   view.className = r === "habits" ? "" : "cols";
   if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
   if (r === "today" && lastRoute === "today" && $("#cmdText")) { $("#cmdText").value = cmdKeep; if (cmdFocus) $("#cmdText").focus(); }
@@ -1058,8 +1130,8 @@ function goalDialog(g) {
     <label class="field">Навіщо мені це<input type="text" name="why" value="${esc(g.why || "")}"></label>
     <label class="field">Кроки, кожен з нового рядка<textarea name="steps" rows="6">${esc((g.steps || []).map(s => s.t).join("\n"))}</textarea></label>`,
     fd => {
-      const old = Object.fromEntries((g.steps || []).map(s => [s.t, s.done]));
-      const steps = fd.steps.split("\n").map(s => s.trim()).filter(Boolean).map(t => ({ t, done: !!old[t] }));
+      const old = Object.fromEntries((g.steps || []).map(s => [s.t, s]));
+      const steps = fd.steps.split("\n").map(s => s.trim()).filter(Boolean).map(t => ({ t, done: !!(old[t] && old[t].done), at: (old[t] && old[t].at) || null }));
       const data = { title: fd.title.trim(), area: fd.area, deadline: fd.deadline || null, why: fd.why.trim(), steps };
       if (!data.title) return false;
       if (isNew) { const ref = db.collection("goals").doc(); write("goals/" + ref.id, () => ref.set(data)); }
@@ -1458,6 +1530,11 @@ document.addEventListener("click", e => {
   if (act === "editGoal") goalDialog(S.goals.find(x => x.id === id));
   if (act === "rmStep") { const x = S.roadmap.find(r => r.id === id); if (x) toggleRm(x, Number(b.dataset.i)); }
   if (act === "step") { const g = S.goals.find(x => x.id === id); if (g) toggleStep(g, Number(b.dataset.i)); }
+  if (act === "newBook") bookDialog(null);
+  if (act === "editBook") bookDialog(S.books.find(x => x.id === id));
+  if (act === "bookRate") { const bk = S.books.find(x => x.id === id), n = Number(b.dataset.n); if (bk) setBook(bk, { rating: bk.rating === n ? null : n }); }
+  if (act === "bookStatus") { const bk = S.books.find(x => x.id === id), st = b.dataset.s; if (bk) { setBook(bk, st === "read" ? { status: st, finishedAt: new Date().toISOString() } : { status: st }); if (st === "read") { toast(`Книгу дочитано! +${XP.book} маси`); confetti(30); } } }
+  if (act === "libFilter") { libFilter = b.dataset.t || ""; render(); }
   if (act === "mainQuest") saveSettings({ mainQuest: set().mainQuest === id ? null : id });
   if (act === "exam") saveSettings({ examMode: !set().examMode });
   if (act === "addArea") saveSettings({ areas: [...areas(), { id: "a" + Date.now().toString(36), name: "Новий напрям", color: "#6B7C8C" }] });
@@ -1509,7 +1586,7 @@ addEventListener("hashchange", render);
 document.addEventListener("keydown", e => {
   if (med.el) { if (e.key === "Escape") { medStop(false); e.preventDefault(); } return; }
   if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, dialog")) return;
-  const tabs = ["today", "tasks", "habits", "goals", "cal", "setup"], i = "123456".indexOf(e.key);
+  const tabs = ["today", "tasks", "habits", "goals", "library", "cal", "setup"], i = "1234567".indexOf(e.key);
   if (i >= 0) { location.hash = "#" + tabs[i]; e.preventDefault(); }
   else if (e.key === "n" || e.key === "т") { taskDialog(null); e.preventDefault(); }
   else if ((e.key === "f" || e.key === "а") && !(focus.endAt > Date.now())) { focusStart(25); e.preventDefault(); }
@@ -1538,6 +1615,7 @@ render();
   db.collection("tasks").onSnapshot(list("tasks"), fail);
   db.collection("goals").onSnapshot(list("goals"), fail);
   db.collection("roadmap").onSnapshot(list("roadmap"), fail);
+  db.collection("books").onSnapshot(list("books"), fail);
   db.collection("notes").orderBy("at", "desc").limit(10).onSnapshot(list("notes"), fail);
   // All days: total XP needs the whole history (about 365 small documents a year).
   db.collection("days").onSnapshot(snap => {

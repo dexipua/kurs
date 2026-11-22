@@ -34,3 +34,7 @@ Exam mode keeps only habits with `area: "study"` or `keepInExams: true`, and onl
 ## roadmap/<id>
 
 Optional internship map. `{order: number, title, when: string, why: string, items: [{t, done}]}`. Stages render in `order`; the first stage with an unfinished item is the current one.
+
+## books/<id>
+
+`{title, author, status: "read"|"reading"|"want", theme, rating: 1-5|null, idea, finishedAt: ISO|null, before: bool}`. `before: true` marks books read before the tracker (no XP).

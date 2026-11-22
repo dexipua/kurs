@@ -219,6 +219,16 @@
   .chip-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   @media (max-width: 380px) { .cal { gap: 3px; } .day { padding: 3px; min-height: 36px; } .day small { display: none; } }
   #view { display: grid; gap: 18px; }
+  .hero { position: relative; overflow: hidden; gap: 10px; border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+    background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%), var(--surface); }
+  .hero::after { content: ""; position: absolute; right: -40px; top: -40px; width: 150px; height: 150px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, #000 34%, color-mix(in srgb, var(--brass) 55%, transparent) 38%, transparent 64%); opacity: .55; }
+  .hero > * { position: relative; z-index: 1; }
+  .vision { font: 700 21px/1.2 var(--display); letter-spacing: -0.01em; overflow-wrap: anywhere; max-width: 85%; }
+  .cosmos { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; }
+  .cosmos b { font: 700 14px var(--display); color: var(--brass); }
+  .quote { margin: 0; padding: 10px 12px; border-left: 3px solid var(--brass); background: var(--soft); border-radius: 0 calc(var(--r) * .6) calc(var(--r) * .6) 0; font-style: italic; overflow-wrap: anywhere; }
+  .quote small { display: block; margin-top: 4px; font: 500 12px var(--mono); font-style: normal; color: var(--muted); }
   .wins { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 14px; }
   .wins li { overflow-wrap: anywhere; }
   .wins li::before { content: "✓ "; color: var(--ok); font-weight: 700; }
@@ -483,6 +493,10 @@ function achievements(g) {
     ["Людина принципів", "10 разів застосувати принцип з книги", habitDays(/принцип/i) >= 10],
     ["Харизма", "300 досвіду в «Житті»", (g.byArea.life || 0) >= 300],
     ["Ранг A", "Досягти 35 рівня", g.lvl >= 35], ["Ранг S", "Досягти 55 рівня", g.lvl >= 55],
+    ["Перша зірка", "Стати «Зіркою» (8 рівень)", g.lvl >= 8], ["Горизонт подій", "Стати «Чорною дірою» (27 рівень)", g.lvl >= 27],
+    ["Спокійний центр", "7 днів медитації", habitDays(/медитац/i) >= 7], ["Маса росте", "30 днів щоденника", habitDays(/щоденник/i) >= 30],
+    ["Квазар", "10 кроків «Карти стажування»", S.roadmap.reduce((n, x) => n + (x.items || []).filter(i => i.done).length, 0) >= 10],
+    ["Головний квест", "Пройти головний квест до кінця", !!S.goals.find(x => x.id === set().mainQuest && goalProgress(x) === 100)],
   ];
 }
 function statusPanel() {
@@ -619,6 +633,58 @@ function mainQuestPanel() {
     <div class="mq-title">${esc(g.title)}</div><div class="bar"><span style="width:${p}%"></span></div>
     ${next ? `<ul class="steps"><li><button class="check" data-act="step" data-id="${esc(g.id)}" data-i="${i}" aria-pressed="false" aria-label="Крок: ${esc(next.t)}"></button><span><b>Наступний крок:</b> ${esc(next.t)}</span></li></ul>` : `<p style="margin:0">Квест пройдено! Обери наступний головний квест у «Цілях».</p>`}</section>`;
 }
+// ---------- hero: where I'm going, cosmic title, quote of the day ----------
+const COSMOS = [[1, "Космічний пил", "Усе починається з пилу. Кожна дія додає масу."], [3, "Туманність", "Матерія збирається докупи. З'являється форма."],
+  [5, "Протозоря", "Гравітація стискає хмару. Усередині стає гаряче."], [8, "Зірка", "Запалилось: ти світиш власним світлом."],
+  [12, "Червоний гігант", "Ти виріс більшим, ніж здавалося можливим."], [16, "Наднова", "Вибух сили: тебе видно здалеку."],
+  [21, "Нейтронна зірка", "Неймовірна щільність. Мало слів, багато суті."], [27, "Чорна діра", "Спокійний центр. Гравітація без зусиль."],
+  [35, "Квазар", "Довкола тебе інші починають світитися."]];
+const cosmosOf = lvl => { let i = 0; while (i + 1 < COSMOS.length && lvl >= COSMOS[i + 1][0]) i++; return { cur: COSMOS[i], next: COSMOS[i + 1] }; };
+const QUOTES = [
+  ["Марк Аврелій", "Найкращий спосіб помститися — не уподібнюватися кривднику."],
+  ["Марк Аврелій", "Щастя твого життя залежить від якості твоїх думок."],
+  ["Сенека", "Ми страждаємо частіше в уяві, ніж насправді."],
+  ["Епіктет", "Людей тривожать не речі, а їхні думки про речі."],
+  ["Сенека", "Не тому ми не наважуємося, що речі важкі; вони важкі, бо ми не наважуємося."],
+  ["Сенека", "Поки ми відкладаємо, життя минає."],
+  ["Лао-цзи", "Хто перемагає інших — сильний. Хто перемагає себе — могутній."],
+  ["Лао-цзи", "Хто знає інших — мудрий. Хто знає себе — просвітлений."],
+  ["Лао-цзи", "Подорож у тисячу лі починається з першого кроку."],
+  ["Сократ", "Я знаю, що нічого не знаю."],
+  ["Дельфійський напис", "Пізнай самого себе."],
+  ["Григорій Сковорода", "Світ ловив мене, та не спіймав."],
+  ["Тарас Шевченко", "Учітесь, читайте, і чужому научайтесь, й свого не цурайтесь."],
+  ["Леся Українка", "Хто визволиться сам, той буде вільний."],
+  ["Іван Франко", "Лиш боротись — значить жить."],
+  ["Фрідріх Ніцше", "Хто має «навіщо» жити, витримає майже будь-яке «як»."],
+  ["Чарлі Мангер", "Покажіть мені стимули, і я покажу вам результат."],
+  ["Карл Якобі", "Інвертуй, завжди інвертуй."],
+  ["Річард Фейнман", "Перший принцип — не обманювати себе. А себе обманути найлегше."],
+  ["Альберт Ейнштейн", "Уява важливіша за знання."],
+  ["Ісаак Ньютон", "Якщо я бачив далі, то тому, що стояв на плечах гігантів."],
+  ["Марія Склодовська-Кюрі", "Нічого в житті не треба боятися, треба лише розуміти."],
+  ["Карл Саган", "Ми — спосіб, у який Всесвіт пізнає себе."],
+  ["Артур Кларк", "Будь-яка достатньо розвинена технологія невідрізненна від магії."],
+  ["Алан Кей", "Найкращий спосіб передбачити майбутнє — винайти його."],
+  ["Стів Джобс", "Залишайся голодним. Залишайся безрозсудним."],
+  ["Стів Джобс", "Зосередженість — це вміння казати «ні»."],
+  ["Савелій Тартаковер", "Перемагає той, хто зробив передостанню помилку."],
+  ["Джим Рон", "Дисципліна — це міст між цілями й досягненнями."],
+  ["Джим Рон", "Ти — середнє п'яти людей, з якими проводиш найбільше часу."],
+  ["Стівен Кові", "Більшість слухає, щоб відповісти. Слухай, щоб зрозуміти."],
+  ["Амброуз Редмун", "Сміливість — не відсутність страху, а рішення, що щось важливіше за страх."],
+  ["Африканське прислів'я", "Хочеш швидко — йди сам. Хочеш далеко — йди разом."],
+];
+const dayIndex = () => { const d = NOW(); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5); };
+const quoteToday = () => QUOTES[(dayIndex() * 7) % QUOTES.length];
+function heroPanel() {
+  const g = game(), { cur, next } = cosmosOf(g.lvl), [who, text] = quoteToday();
+  return `<section class="panel hero span"><div class="eyebrow">Куди я йду</div>
+    <div class="vision">${esc(set().vision || "Стати чорною дірою: глибина, спокій, гравітація")}</div>
+    <div class="cosmos"><span>Зараз ти —</span><b>${esc(cur[1])}</b><span class="muted">· маса ${g.total}</span></div>
+    <p class="muted" style="margin:0;font-size:14px">${esc(cur[2])}${next ? ` Наступна форма — «${esc(next[1])}» на ${next[0]} рівні.` : ""}</p>
+    <blockquote class="quote">«${esc(text)}»<small>${esc(who)}</small></blockquote></section>`;
+}
 function viewToday() {
   const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
@@ -627,6 +693,7 @@ function viewToday() {
   ${set().examMode ? `<div class="panel exam span"><b>Режим контрольних</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у контрольні теж». Серія не згорить.</span></div>` : ""}
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
+  ${heroPanel()}
   ${statusPanel()}
   ${mainQuestPanel()}
   ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
@@ -746,7 +813,8 @@ function viewSetup() {
   return `<section class="panel"><h2>Про тебе</h2>
     <p class="muted" style="margin:0">Тренер звертається до тебе на ім'я і враховує, чим ти живеш.</p>
     <div class="grid2"><label class="field">Ім'я<input type="text" id="pName" value="${esc(s.name)}"></label>
-    <label class="field">Хто ти й до чого йдеш<input type="text" id="pAbout" value="${esc(s.about)}" placeholder="напр. студент 2 курсу, вчу Python, хочу на стажування"></label></div></section>
+    <label class="field">Хто ти й до чого йдеш<input type="text" id="pAbout" value="${esc(s.about)}" placeholder="напр. студент 2 курсу, вчу Python, хочу на стажування"></label></div>
+    <label class="field">Куди я йду — заголовок на «Сьогодні»<input type="text" id="pVision" value="${esc(s.vision || "")}" placeholder="Стати чорною дірою: глибина, спокій, гравітація"></label></section>
   <section class="panel"><div class="panel-head"><h2>Вигляд</h2><label class="field" style="min-width:150px">Режим<select id="lookMode">
       <option value="system" ${s.mode === "system" || !s.mode ? "selected" : ""}>Як у системі</option>
       <option value="light" ${s.mode === "light" ? "selected" : ""}>Світлий</option>
@@ -1416,6 +1484,7 @@ document.addEventListener("change", e => {
   if (el.id === "tone") saveSettings({ tone: el.value });
   if (el.id === "pName") saveSettings({ name: el.value.trim() });
   if (el.id === "pAbout") saveSettings({ about: el.value.trim() });
+  if (el.id === "pVision") saveSettings({ vision: el.value.trim() });
   if (el.id === "threshold") saveSettings({ threshold: Number(el.value) });
   if (el.dataset.areaName !== undefined || el.dataset.areaColor !== undefined) {
     const l = areas().map(a => ({ ...a })), i = Number(el.dataset.areaName ?? el.dataset.areaColor);

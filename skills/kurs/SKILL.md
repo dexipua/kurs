@@ -73,6 +73,7 @@ The Today tab has one box where the user types a request or a question. The page
 - «Медитація» panel (Today tab): breathing modes calm/box/free, 3/5/10 min, full-screen overlay with an orb, soft bell, Escape to stop. Finishing (or ≥3 min) ticks the first active habit whose title contains «медитац»/«meditat».
 - «Карта стажування» (Goals tab, link on Today): ordered stages from `roadmap/<id>` {order, title, when, why, items:[{t, done}]}; the first stage with an open item is «ти тут»; each item gives step XP.
 - «Головний квест» (`settings/main.mainQuest` = goal id, set with ☆ on a goal card) is pinned on Today; «Мої перемоги» compares this week with last (habit marks, tasks by doneAt, goal/map steps by their `at`, focus minutes). Past ⚡/🎲 bonus tasks expire instead of turning overdue.
+- Hero panel on Today: `settings/main.vision` headline (editable in Setup), cosmic title by level (COSMOS: пил 1 → квазар 35) with total XP as «маса», and a quote of the day from QUOTES. Six cosmic achievements.
 - `settings/main` also holds `radius` (sharp | soft | round), `density` (cozy | compact), `font` (modern | rounded | classic | mono), and `skin` now has 12 values (sea, forest, sunset, violet, sakura, mono, neon, sand, lavender, coffee, aurora, ruby).
 
 ## Game layer (computed in the page, nothing extra is stored)

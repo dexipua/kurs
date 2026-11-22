@@ -342,7 +342,9 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const pad = n => String(n).padStart(2, "0");
 const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
-const TODAY = () => ymd(new Date());
+const DAY_START_HOUR = 4;
+const NOW = () => new Date(Date.now() - DAY_START_HOUR * 3600000);
+const TODAY = () => ymd(NOW());
 const weekStart = d => addDays(d, -((d.getDay() + 6) % 7));
 const set = () => ({ ...DEFAULT_SETTINGS, ...(S.settings || {}) });
 const areas = () => (set().areas && set().areas.length ? set().areas : DEFAULT_AREAS);
@@ -382,18 +384,18 @@ function dayRate(date) {
 }
 const isGood = date => dailyHabits().length > 0 && dayRate(date) * 100 >= set().threshold;
 function streak() {
-  let n = 0, d = new Date();
+  let n = 0, d = NOW();
   if (!isGood(ymd(d))) d = addDays(d, -1); // today still counts as open
   for (let i = 0; i < 400 && isGood(ymd(d)); i++) { n++; d = addDays(d, -1); }
   return n;
 }
 function weekCount(id) {
-  const ws = weekStart(new Date()); let c = 0;
+  const ws = weekStart(NOW()); let c = 0;
   for (let i = 0; i < 7; i++) if (doneOn(ymd(addDays(ws, i)), id)) c++;
   return c;
 }
 function missedDaysInRow() {
-  let n = 0, d = addDays(new Date(), -1);
+  let n = 0, d = addDays(NOW(), -1);
   for (let i = 0; i < 14 && dailyHabits().length && dayRate(ymd(d)) === 0; i++) { n++; d = addDays(d, -1); }
   return n;
 }
@@ -435,7 +437,7 @@ function maxStreak() {
 }
 // A missed daily quest yesterday opens a short bonus quest today (never in exam mode, never on the first day).
 function penaltyToday() {
-  const y = ymd(addDays(new Date(), -1)), first = Object.keys(S.days).sort()[0];
+  const y = ymd(addDays(NOW(), -1)), first = Object.keys(S.days).sort()[0];
   return !set().examMode && dailyHabits().length > 0 && first && first <= y && !isGood(y);
 }
 function habitDays(re) {
@@ -547,7 +549,7 @@ function ring(p) {
     <text x="42" y="48" text-anchor="middle">${p}%</text></svg>`;
 }
 function weekStrip() {
-  const ws = weekStart(new Date()), names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"], today = TODAY();
+  const ws = weekStart(NOW()), names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"], today = TODAY();
   return `<div class="week">${names.map((n, i) => {
     const d = ymd(addDays(ws, i)), p = d > today ? 0 : Math.round(dayRate(d) * 100);
     return `<div class="wd ${d === today ? "today" : ""} ${isGood(d) ? "good" : ""}" title="${fmtDate(d)}: ${p}%"><i><em style="height:${p}%"></em></i>${n}</div>`;
@@ -560,13 +562,15 @@ function latestCoach() {
   return `<div class="coach"><small>${esc(when)} · ${esc({ morning: "ранок", evening: "вечір", weekly: "тиждень", page: "порада" }[n.kind] || "нотатка")}</small>${esc(n.text)}</div>`;
 }
 
+const lateNight = () => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 30 && m < DAY_START_HOUR * 60; };
 function viewToday() {
   const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
-  const soon = focusTasks().filter(t => t.due && t.due > TODAY() && t.due <= ymd(addDays(new Date(), 3))).sort(taskSort);
+  const soon = focusTasks().filter(t => t.due && t.due > TODAY() && t.due <= ymd(addDays(NOW(), 3))).sort(taskSort);
   return `
-  ${set().examMode ? `<div class="panel exam span"><b>Режим сесії</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у сесію теж». Серія не згорить.</span></div>` : ""}
+  ${set().examMode ? `<div class="panel exam span"><b>Режим контрольних</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у контрольні теж». Серія не згорить.</span></div>` : ""}
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
+  ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
   ${statusPanel()}
   ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
     <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
@@ -598,33 +602,35 @@ function viewTasks() {
   const inF = t => !taskFilter || t.area === taskFilter;
   const open = openTasks().filter(inF).sort(taskSort), done = S.tasks.filter(t => t.done && inF(t)).sort((a, b) => (b.doneAt || "").localeCompare(a.doneAt || ""));
   const groups = [["Прострочені", open.filter(t => t.due && t.due < TODAY())], ["Сьогодні", open.filter(t => t.due === TODAY())],
-    ["Далі", open.filter(t => t.due && t.due > TODAY())], ["Без дати", open.filter(t => !t.due)]];
+    ["Найближчі 7 днів", open.filter(t => t.due && t.due > TODAY() && t.due <= ymd(addDays(NOW(), 7)))], ["Без дати", open.filter(t => !t.due)]];
+  const later = open.filter(t => t.due && t.due > ymd(addDays(NOW(), 7)));
   return `<section class="panel span"><form class="inline" id="quickTask"><input type="text" id="qtTitle" placeholder="Нова задача, напр. «Здати лабу з дискретки»" aria-label="Нова задача" required>
     <button class="btn primary">Додати</button></form>
     <div class="actions"><button type="button" class="btn ghost" data-act="newTask">Детальніше: дата, напрям, пріоритет</button></div>
     <div class="chips" role="group" aria-label="Фільтр за напрямом"><button type="button" class="chip-btn" data-act="tfilter" data-area="" aria-pressed="${!taskFilter}">Усі · ${openTasks().length}</button>${areas().map(a => { const n = openTasks().filter(t => t.area === a.id).length; return n ? `<button type="button" class="chip-btn" data-act="tfilter" data-area="${esc(a.id)}" aria-pressed="${taskFilter === a.id}">${esc(a.name)} · ${n}</button>` : ""; }).join("")}</div></section>
   ${groups.filter(g => g[1].length).map(([n, l]) => `<section class="panel"><div class="panel-head"><h2>${n}</h2><span class="eyebrow">${l.length}</span></div><div class="list">${l.map(taskRow).join("")}</div></section>`).join("")
     || `<section class="panel"><p class="muted">Відкритих задач немає.</p></section>`}
+  ${later.length ? `<section class="panel"><details><summary>Пізніше: ${later.length}</summary><div class="list">${later.map(taskRow).join("")}</div></details></section>` : ""}
   ${done.length ? `<section class="panel"><details><summary>Виконані: ${done.length}</summary><div class="list">${done.slice(0, 40).map(taskRow).join("")}</div></details></section>` : ""}`;
 }
 
 function habitStreak(h) {
-  if (h.freq === "weekly") { let n = 0, ws = weekStart(new Date());
+  if (h.freq === "weekly") { let n = 0, ws = weekStart(NOW());
     for (let w = 1; w < 60; w++) { const s0 = addDays(ws, -7 * w); let c = 0; for (let i = 0; i < 7; i++) if (doneOn(ymd(addDays(s0, i)), h.id)) c++; if (c >= (h.target || 1)) n++; else break; }
     return { n, unit: "тиж." }; }
-  let n = 0, d = new Date(); if (!doneOn(ymd(d), h.id)) d = addDays(d, -1);
+  let n = 0, d = NOW(); if (!doneOn(ymd(d), h.id)) d = addDays(d, -1);
   for (let i = 0; i < 400 && doneOn(ymd(d), h.id); i++) { n++; d = addDays(d, -1); }
   return { n, unit: "дн." };
 }
 function viewHabits() {
-  const days = [...Array(14)].map((_, i) => ymd(addDays(new Date(), i - 13)));
+  const days = [...Array(14)].map((_, i) => ymd(addDays(NOW(), i - 13)));
   const all = [...S.habits].sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   return `<section class="panel"><div class="panel-head"><h2>Мої звички</h2><button class="btn primary" type="button" data-act="newHabit">Додати звичку</button></div>
     <p class="muted" style="margin:0">Квадратики — останні 14 днів. Натисни на звичку, щоб змінити її.</p>
     <div class="list">${all.map(h => `<div class="row" style="grid-template-columns:1fr auto">
       <button class="t" data-act="editHabit" data-id="${esc(h.id)}" style="all:unset;cursor:pointer;display:grid;gap:4px;min-width:0">
         <span style="${h.active === false ? "color:var(--muted);text-decoration:line-through" : ""}">${esc(h.title)}</span>
-        <span class="meta">${areaChip(h.area)}<span class="chip">${h.freq === "weekly" ? `${h.target || 1}× на тиждень` : "щодня"}</span>${(st => st.n ? `<span class="chip hot">серія ${st.n} ${st.unit}</span>` : "")(habitStreak(h))}${h.keepInExams ? `<span class="chip">у сесію теж</span>` : ""}</span></button>
+        <span class="meta">${areaChip(h.area)}<span class="chip">${h.freq === "weekly" ? `${h.target || 1}× на тиждень` : "щодня"}</span>${(st => st.n ? `<span class="chip hot">серія ${st.n} ${st.unit}</span>` : "")(habitStreak(h))}${h.keepInExams ? `<span class="chip">у контрольні теж</span>` : ""}</span></button>
       <div style="display:flex;gap:2px" aria-hidden="true">${days.map(d => `<i style="width:7px;height:18px;border-radius:2px;background:${doneOn(d, h.id) ? "var(--accent)" : "var(--soft)"}"></i>`).join("")}</div>
     </div>`).join("") || `<p class="muted">Поки порожньо.</p>`}</div></section>`;
 }
@@ -661,9 +667,9 @@ function viewSetup() {
       <label class="field">Шрифт<select id="lookFont"><option value="modern" ${!s.font || s.font === "modern" ? "selected" : ""}>Сучасний</option><option value="rounded" ${s.font === "rounded" ? "selected" : ""}>Округлий</option><option value="classic" ${s.font === "classic" ? "selected" : ""}>Класичний</option><option value="mono" ${s.font === "mono" ? "selected" : ""}>Хакерський</option></select></label>
     </div>
     <div class="skins">${SKINS.map(([id, n, a, b]) => `<button type="button" class="skin" data-act="skin" data-skin="${id}" aria-pressed="${(s.skin || "sea") === id}"><i><b style="background:${a}"></b><b style="background:${b}"></b></i>${n}</button>`).join("")}</div></section>
-  <section class="panel"><h2>Режим сесії</h2>
-    <p class="muted" style="margin:0">Під час сесії лишаються тільки навчання і звички з позначкою «у сесію теж». Нагадування теж стають м'якшими.</p>
-    <div class="actions"><button class="btn ${s.examMode ? "primary" : "ghost"}" type="button" data-act="exam">${s.examMode ? "Сесія: увімкнено" : "Увімкнути режим сесії"}</button></div></section>
+  <section class="panel"><h2>Режим контрольних</h2>
+    <p class="muted" style="margin:0">У тиждень контрольних лишаються тільки навчання і звички з позначкою «у контрольні теж». Нагадування теж стають м'якшими.</p>
+    <div class="actions"><button class="btn ${s.examMode ? "primary" : "ghost"}" type="button" data-act="exam">${s.examMode ? "Режим контрольних: увімкнено" : "Увімкнути режим контрольних"}</button></div></section>
   <section class="panel"><h2>Характер тренера</h2>
     <div class="grid2"><label class="field">Тон нагадувань<select id="tone">
       <option value="soft" ${s.tone === "soft" ? "selected" : ""}>М'який: підтримка, без тиску</option>
@@ -746,7 +752,7 @@ function render() {
   const r = route();
   document.querySelectorAll("nav.tabs a").forEach(a => { if (a.dataset.r === r) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   $("#viewTitle").textContent = TITLES[r];
-  $("#dateLine").textContent = new Date().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
+  $("#dateLine").textContent = NOW().toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "long" });
   $("#streakNum").textContent = streak();
   const view = $("#view");
   // keep typed text in the quick-add field across live updates
@@ -796,7 +802,7 @@ function saveJournal(date) {
   if (h && text && !doneOn(date, h.id)) toggleHabit(h.id, date); else { toast("Запис збережено"); render(); }
 }
 // ---------- calendar ----------
-const cal = { month: new Date(new Date().getFullYear(), new Date().getMonth(), 1), sel: TODAY() };
+const cal = { month: new Date(NOW().getFullYear(), NOW().getMonth(), 1), sel: TODAY() };
 const WD = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 function viewCalendar() {
   const m = cal.month, first = weekStart(m), today = TODAY(), mm = m.getMonth();
@@ -873,7 +879,7 @@ function habitDialog(h) {
     <label class="field">Як часто<select name="freq"><option value="daily">щодня</option><option value="weekly" ${h.freq === "weekly" ? "selected" : ""}>кілька разів на тиждень</option></select></label></div>
     <div class="grid2"><label class="field">Разів на тиждень (для тижневих)<input type="number" name="target" min="1" max="7" value="${esc(h.target || 3)}"></label>
     <label class="field">Хвилин<input type="number" name="minutes" min="0" max="600" value="${esc(h.minutes ?? "")}"></label></div>
-    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="keepInExams" ${h.keepInExams ? "checked" : ""}> Лишати і в режимі сесії</label>
+    <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="keepInExams" ${h.keepInExams ? "checked" : ""}> Лишати і в режимі контрольних</label>
     <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="active" ${h.active !== false ? "checked" : ""}> Активна</label>`,
     fd => {
       const data = { title: fd.title.trim(), area: fd.area, freq: fd.freq, target: Math.min(7, Math.max(1, Number(fd.target) || 1)),
@@ -907,9 +913,9 @@ function goalDialog(g) {
 // ---------- coach (Claude on the viewer's account) ----------
 function snapshotText() {
   const s = set(), t = TODAY();
-  const last7 = [...Array(7)].map((_, i) => { const d = ymd(addDays(new Date(), i - 6)); return `${d}: ${Math.round(dayRate(d) * 100)}%`; }).join(", ");
+  const last7 = [...Array(7)].map((_, i) => { const d = ymd(addDays(NOW(), i - 6)); return `${d}: ${Math.round(dayRate(d) * 100)}%`; }).join(", ");
   const gm = game();
-  return [`Рівень ${gm.lvl}, ранг ${gm.rank}, ${gm.into}/${gm.need} досвіду до наступного рівня.`, `Сьогодні ${t}. Тон тренера: ${{ soft: "м'який", balanced: "збалансований", strict: "строгий" }[s.tone]}. Режим сесії: ${s.examMode ? "так" : "ні"}. Серія: ${streak()} днів.`,
+  return [`Рівень ${gm.lvl}, ранг ${gm.rank}, ${gm.into}/${gm.need} досвіду до наступного рівня.`, `Сьогодні ${t}. Тон тренера: ${{ soft: "м'який", balanced: "збалансований", strict: "строгий" }[s.tone]}. Режим контрольних: ${s.examMode ? "так" : "ні"}. Серія: ${streak()} днів.`,
     `Звички сьогодні: ${dailyHabits().map(h => `${h.title} [${doneOn(t, h.id) ? "✓" : "✗"}]`).join("; ") || "немає"}.`,
     `Тижневі: ${weeklyHabits().map(h => `${h.title} ${weekCount(h.id)}/${h.target}`).join("; ") || "немає"}.`,
     `Виконання за 7 днів: ${last7}.`,
@@ -1056,7 +1062,7 @@ const PRINCIPLES = [
   ["Грін", "Люди рідко змінюються різко. Звички показують характер точніше за обіцянки."],
 ];
 function principleToday() {
-  const d = new Date(), start = new Date(d.getFullYear(), 0, 0);
+  const d = NOW(), start = new Date(d.getFullYear(), 0, 0);
   return PRINCIPLES[Math.floor((d - start) / 864e5) % PRINCIPLES.length];
 }
 const applyHabit = () => S.habits.find(h => h.active !== false && /принцип/i.test(h.title || ""));
@@ -1277,7 +1283,7 @@ document.addEventListener("click", e => {
   const id = b.dataset.id, act = b.dataset.act;
   if (act === "habit") toggleHabit(id, b.dataset.date || TODAY());
   if (act === "calDay") { cal.sel = b.dataset.date; render(); }
-  if (act === "calNav") { const n = Number(b.dataset.d); cal.month = n ? new Date(cal.month.getFullYear(), cal.month.getMonth() + n, 1) : new Date(new Date().getFullYear(), new Date().getMonth(), 1); if (!n) cal.sel = TODAY(); render(); }
+  if (act === "calNav") { const n = Number(b.dataset.d); cal.month = n ? new Date(cal.month.getFullYear(), cal.month.getMonth() + n, 1) : new Date(NOW().getFullYear(), NOW().getMonth(), 1); if (!n) cal.sel = TODAY(); render(); }
   if (act === "newTaskOn") taskDialog(null, b.dataset.date);
   if (act === "jMood") { const dt = b.dataset.date; jDraft[dt] = { ...jDraft[dt], mood: Number(b.dataset.m) }; render(); }
   if (act === "jSave") saveJournal(b.dataset.date);

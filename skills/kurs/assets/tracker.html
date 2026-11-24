@@ -264,6 +264,8 @@
   .tl i { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: color-mix(in srgb, var(--accent) 60%, transparent); }
   .tl i.past { opacity: .35; }
   .tl i.ex { background: var(--brass); }
+  .occ { display: flex; gap: 6px 14px; flex-wrap: wrap; font-size: 14px; }
+  .occ span { white-space: nowrap; }
   .tl .tk { position: absolute; top: 0; bottom: 0; width: 1px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
   .tl em { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
   .tl-axis { position: relative; height: 13px; font: 500 10px var(--mono); color: var(--muted); }
@@ -838,7 +840,7 @@ function heroPanel() {
     <p class="muted" style="margin:0;font-size:14px">${esc(cur[2])}${next ? ` Наступна форма — «${esc(next[1])}» на ${next[0]} рівні.` : ""}</p>
     <blockquote class="quote">«${esc(text)}»<small>${esc(who)}</small></blockquote></section>`;
 }
-const TODAY_PANELS = [["sched", "Пари й вільні вікна"], ["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
+const TODAY_PANELS = [["occ", "Чий сьогодні день"], ["sched", "Пари й вільні вікна"], ["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
 const showP = k => !(set().hideToday || []).includes(k);
 let diceNow = "";
 function rollDice() {
@@ -876,6 +878,7 @@ function viewToday() {
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
   ${moodPanel()}
+  ${showP("occ") ? occasionsPanel() : ""}
   ${showP("sched") ? schedulePanel() : ""}
   ${showP("hero") ? heroPanel() : ""}
   ${showP("status") ? statusPanel() : ""}
@@ -1065,6 +1068,9 @@ function viewSetup() {
     <p class="muted" style="margin:0">Трекер покаже пари на «Сьогодні», вільні вікна між ними й контрольні, а насичений день підкаже зробити легким. Найпростіше — попроси Claude синхронізувати розклад з Google Calendar. Або на комп'ютері: Google Calendar → Налаштування → Імпорт і експорт → Експорт, розпакуй архів і вибери .ics свого календаря.</p>
     <div class="actions"><label class="btn ghost" style="cursor:pointer">Вибрати .ics файл<input type="file" id="icsFile" accept=".ics,text/calendar" hidden></label>
     ${S.schedule.length ? `<button class="btn ghost" type="button" data-act="clearSched">Очистити розклад</button>` : ""}</div></section>
+  <section class="panel"><div class="panel-head"><h2>Дні народження</h2><span class="eyebrow num">${bdays().length}</span></div>
+    <p class="muted" style="margin:0">Кожен з нового рядка: «Ім'я — ДД.ММ». Трекер нагадає за тиждень і в сам день, на «Сьогодні» й у календарі.</p>
+    <label class="field" for="bdays">Список<textarea id="bdays" rows="4" placeholder="Мама — 12.03&#10;Олег — 05.12">${esc(bdays().map(b => `${b.name} — ${b.md.slice(3)}.${b.md.slice(0, 2)}`).join("\n"))}</textarea></label></section>
   <section class="panel"><h2>Про тебе</h2>
     <p class="muted" style="margin:0">Тренер звертається до тебе на ім'я і враховує, чим ти живеш.</p>
     <div class="grid2"><label class="field">Ім'я<input type="text" id="pName" value="${esc(s.name)}"></label>
@@ -1235,10 +1241,10 @@ function viewCalendar() {
   const cells = [...Array(42)].map((_, i) => {
     const d = addDays(first, i), k = ymd(d), past = k <= today;
     const p = past ? Math.round(dayRate(k) * 100) : 0, ts = tasksByDay[k] || [], f = (S.days[k] || {}).focus || 0;
-    const dc = classesOn(k), dex = dc.some(isExam);
+    const dc = classesOn(k), dex = dc.some(isExam), oc = occasions(k);
     const cls = ["day", d.getMonth() !== mm ? "out" : "", k === today ? "today" : "", past && isGood(k) ? "good" : "", p >= 60 ? "hi" : ""].join(" ");
     return `<button type="button" class="${cls}" style="--p:${Math.round(p * .85)}" data-act="calDay" data-date="${k}" aria-pressed="${cal.sel === k}" aria-label="${fmtDate(k)}: ${p}% звичок, задач ${ts.length}">
-      <b>${d.getDate()}</b>${dc.length ? `<em class="${dex ? "ex" : ""}" aria-hidden="true">${dex ? "!" : dc.length}</em>` : ""}<span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}${(S.journal[k] || {}).mood ? `<span class="mood" aria-hidden="true">${MOODS[S.journal[k].mood - 1]}</span>` : ""}</button>`;
+      <b>${d.getDate()}</b>${dc.length ? `<em class="${dex ? "ex" : ""}" aria-hidden="true">${dex ? "!" : dc.length}</em>` : oc.length ? `<em aria-hidden="true">${oc[0][0]}</em>` : ""}<span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}${(S.journal[k] || {}).mood ? `<span class="mood" aria-hidden="true">${MOODS[S.journal[k].mood - 1]}</span>` : ""}</button>`;
   }).join("");
   // month summary
   const inMonth = [...Array(new Date(m.getFullYear(), mm + 1, 0).getDate())].map((_, i) => ymd(new Date(m.getFullYear(), mm, i + 1)));
@@ -1255,6 +1261,7 @@ function viewCalendar() {
     <div class="legend"><span><i style="background:color-mix(in srgb, var(--accent) 85%, var(--bg))"></i>більше звичок</span><span><i style="background:var(--brass);border-radius:50%"></i>квест виконано</span><span><i style="background:var(--accent);border-radius:50%;width:8px;height:8px"></i>задачі</span><span>25′ — хвилини фокусу</span>${S.schedule.length ? `<span>3 — пари, ! — контрольна</span>` : ""}</div></section>
   <section class="panel"><div class="panel-head"><h2 style="text-transform:capitalize">${esc(title)}</h2>${selPast ? `<span class="eyebrow num">${Math.round(dayRate(sel) * 100)}% · ${dayFocus} хв</span>` : `<span class="eyebrow">попереду</span>`}</div>
     ${selPast ? `<div class="list">${dailyHabits().map(h => habitRow(h, sel)).join("") || `<p class="muted">Звичок немає.</p>`}</div>` : `<p class="muted" style="margin:0">Звички відмічаються в день, коли ти їх робиш. Сюди можна запланувати задачі.</p>`}
+    ${occasions(sel).length ? `<div class="occ">${occasions(sel).map(([i, t]) => `<span>${i} ${esc(t)}</span>`).join("")}</div>` : ""}
     ${classesOn(sel).length ? `<h3 style="font-size:14px;margin-top:4px">Пари</h3><div class="sched">${classesOn(sel).map(e => `<div class="${isExam(e) ? "ex" : ""}"><span>${e.start ? `${e.start}–${e.end}` : "весь день"}</span><b>${esc(e.title)}</b>${e.place || e.shelter ? `<small>${[e.place && esc(e.place), e.shelter && "🛡 укриття " + esc(e.shelter)].filter(Boolean).join(" · ")}</small>` : ""}${joinBtn(e)}</div>`).join("")}</div>` : ""}
     <h3 style="font-size:14px;margin-top:4px">Задачі на цей день</h3>
     <div class="list">${selTasks.map(taskRow).join("") || `<p class="muted">Нічого не заплановано.</p>`}</div>
@@ -1280,13 +1287,35 @@ const EXAM_RE = /контрольн|екзамен|іспит|залік|мід�
 const hm = s => { const [h, m] = String(s || "0:0").split(":").map(Number); return h * 60 + (m || 0); };
 const fmtHm = n => String(Math.floor(n / 60)).padStart(2, "0") + ":" + String(n % 60).padStart(2, "0");
 const isExam = e => e.kind === "exam" || EXAM_RE.test(e.title || "");
-const classesOn = date => S.schedule.filter(e => e.date === date).sort((a, b) => (a.start || "").localeCompare(b.start || ""));
+const isHol = e => e.kind === "holiday";
+const classesOn = date => S.schedule.filter(e => e.date === date && !isHol(e)).sort((a, b) => (a.start || "").localeCompare(b.start || ""));
 const busyMin = date => classesOn(date).reduce((a, e) => a + (e.start && e.end ? Math.max(0, hm(e.end) - hm(e.start)) : 0), 0);
 function freeWindows(date, from = 9 * 60, to = 22 * 60, min = 60) {
   const out = []; let t = from;
   for (const e of classesOn(date)) { if (!e.start) continue; const a = hm(e.start), b = hm(e.end || e.start); if (a - t >= min) out.push([t, a]); t = Math.max(t, b); }
   if (to - t >= min) out.push([t, to]);
   return out;
+}
+// «Чий сьогодні день»: holidays from the calendar, a few days close to a CS student, and birthdays from Setup.
+// shortcut: the Programmer's Day is the 256th day; in leap years it is 12.09, update the list if that matters.
+const SPECIAL = { "01-25": "День студентів", "03-14": "День числа π", "05-04": "May the 4th — день Star Wars", "09-13": "День програміста", "11-09": "День української писемності та мови", "11-17": "Міжнародний день студента", "12-09": "День інформатики" };
+const bdays = () => (set().birthdays || []).filter(b => b && b.name && /^\d\d-\d\d$/.test(b.md || ""));
+function occasions(date) {
+  const md = date.slice(5);
+  return [...S.schedule.filter(e => e.date === date && isHol(e)).map(e => ["🎉", e.title]), ...(SPECIAL[md] ? [["✨", SPECIAL[md]]] : []),
+    ...bdays().filter(b => b.md === md).map(b => ["🎂", `День народження: ${b.name}`])];
+}
+function occasionsPanel() {
+  const today = occasions(TODAY()), soon = [];
+  for (let i = 1; i <= 7; i++) { const k = ymd(addDays(NOW(), i)); for (const b of bdays()) if (b.md === k.slice(5)) soon.push(`🎂 ${b.name} — ${i === 1 ? "завтра" : `через ${i} дн., ${fmtDate(k)}`}`); }
+  if (!today.length && !soon.length) return "";
+  return `<section class="panel span"><div class="panel-head"><h2>Чий сьогодні день</h2></div>
+    ${today.length ? `<div class="occ">${today.map(([i, t]) => `<span>${i} ${esc(t)}</span>`).join("")}</div>` : `<p class="muted" style="margin:0">Сьогодні без свят.</p>`}
+    ${today.some(o => o[0] === "🎂") ? `<p class="muted" style="margin:0">Напиши або подзвони — це зараховується у звичку «поспілкуватися».</p>` : ""}
+    ${soon.length ? `<p class="muted" style="margin:0">Незабаром: ${soon.map(esc).join(" · ")}</p>` : ""}</section>`;
+}
+function parseBdays(text) {
+  return String(text).split(/\n|;/).map(l => { const m = /^(.+?)\s*[—–:-]\s*(\d{1,2})[./](\d{1,2})\s*$/.exec(l.trim()); return m && +m[2] <= 31 && +m[3] <= 12 ? { name: m[1].trim().slice(0, 60), md: String(m[3]).padStart(2, "0") + "-" + String(m[2]).padStart(2, "0") } : null; }).filter(Boolean);
 }
 const upcomingExams = (days = 14) => S.schedule.filter(e => isExam(e) && e.date >= TODAY() && e.date <= ymd(addDays(NOW(), days))).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
 // Exam slots for different groups («(слот 1 з 3)») count as one exam: one prep plan covers them all.
@@ -1379,6 +1408,7 @@ function schedulePanel() {
   const task = todayTasks().find(t => !isBonus(t)) || focusTasks().filter(t => !isBonus(t)).sort(taskSort)[0];
   return `<section class="panel span"><div class="panel-head"><h2>${title}</h2><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="eyebrow num">${cl.length ? `${cl.length} · ${durTxt(busyMin(day))}` : schedOff !== null ? "без пар" : "тиждень без пар"}</span>
       <button class="chip-btn" type="button" data-act="schedNav" data-d="-1" aria-label="Попередній день">‹</button>${schedOff !== null ? `<button class="chip-btn" type="button" data-act="schedNav" data-d="0">Сьогодні</button>` : ""}<button class="chip-btn" type="button" data-act="schedNav" data-d="1" aria-label="Наступний день">›</button></span></div>
+    ${day && (schedOff !== null || !isToday) && occasions(day).length ? `<div class="occ">${occasions(day).map(([i, t]) => `<span>${i} ${esc(t)}</span>`).join("")}</div>` : ""}
     ${schedOff !== null ? "" : !isToday && todayCl.length ? `<p class="muted" style="margin:0">Сьогоднішні пари вже закінчились.</p>` : !isToday && day ? `<p class="muted" style="margin:0">Сьогодні пар немає.</p>` : ""}
     ${focus ? `<div class="snext${cur ? " now" : ""}${isExam(focus) ? " ex" : ""}"><small>${label}</small><b>${esc(focus.title)}</b><span>${focus.start}–${focus.end}${focus.place ? " · " + esc(focus.place) : ""}</span>${focus.shelter ? `<span>🛡 укриття ${esc(focus.shelter)}</span>` : ""}${joinBtn(focus, true)}</div>` : ""}
     ${cl.length ? `<div><div class="tl" role="img" aria-label="Шкала дня: ${cl.map(e => e.start + "–" + e.end).join(", ")}">${ticks.map(h => `<b class="tk" style="left:${pc(h * 60)}"></b>`).join("")}${cl.map(e => `<i class="${past(e) ? "past" : ""}${isExam(e) ? " ex" : ""}" style="left:${pc(hm(e.start))};width:${pc(t0 + end(e) - hm(e.start))}" title="${e.start}–${e.end} ${esc(e.title)}"></i>`).join("")}${isToday && nm > t0 && nm < t1 ? `<em style="left:${pc(nm)}"></em>` : ""}</div>
@@ -1935,6 +1965,7 @@ document.addEventListener("change", e => {
   if (el.id === "pName") saveSettings({ name: el.value.trim() });
   if (el.id === "pAbout") saveSettings({ about: el.value.trim() });
   if (el.id === "pVision") saveSettings({ vision: el.value.trim() });
+  if (el.id === "bdays") { const l = parseBdays(el.value); saveSettings({ birthdays: l }); toast(`Збережено днів народження: ${l.length}`); }
   if (el.id === "threshold") saveSettings({ threshold: Number(el.value) });
   if (el.dataset.areaName !== undefined || el.dataset.areaColor !== undefined) {
     const l = areas().map(a => ({ ...a })), i = Number(el.dataset.areaName ?? el.dataset.areaColor);

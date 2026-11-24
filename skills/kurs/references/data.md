@@ -6,7 +6,7 @@ All documents live in the tracker's database (`ArtifactData`, `url` = the tracke
 |---|---|
 | `settings/main` | `name`, `about`, `tone` (`soft` \| `balanced` \| `strict`), `examMode` (bool), `threshold` (% of daily habits for the day to count), `areas` [`{id, name, color}`], `reminders` (text shown in Settings) |
 | `habits/<id>` | `title`, `area`, `freq` (`daily` \| `weekly`), `target` (times a week for weekly), `minutes`, `keepInExams` (bool), `active` (bool), `order` |
-| `schedule/<date>_<HHMM>_<hash>` | `title`, `place`, `date`, `start`, `end` ("HH:MM", empty for all-day), `kind` (`class` or `exam`), `link` (https join URL for Zoom/Meet/Teams from the event; shown as a «🎥 Зайти» button, non-https ignored), `shelter` (air-raid shelter from «Укриття: …» in the event description, e.g. "S05, S06"; empty if none), `source` (`ics` from the page's import, `gcal` when Claude syncs Google Calendar) |
+| `schedule/<date>_<HHMM>_<hash>` | `title`, `place`, `date`, `start`, `end` ("HH:MM", empty for all-day), `kind` (`class`, `exam`, or `holiday` — one doc `<date>_holiday` per day from the «Holidays in Ukraine» calendar, title in Ukrainian; holidays are not classes), `link` (https join URL for Zoom/Meet/Teams from the event; shown as a «🎥 Зайти» button, non-https ignored), `shelter` (air-raid shelter from «Укриття: …» in the event description, e.g. "S05, S06"; empty if none), `source` (`ics` from the page's import, `gcal` when Claude syncs Google Calendar) |
 | `days/<YYYY-MM-DD>` | `date`, `done` {`<habitId>`: true, `penalty`: true}, `focus` (minutes), `light` (true = only core habits count) |
 | `journal/<YYYY-MM-DD>` | `date`, `text`, `mood` (1–5 or null), `at` (ISO time). Private diary: read it only to coach (evening/weekly), never quote it outside the page. |
 | `tasks/<id>` | `title`, `area`, `due` (`YYYY-MM-DD` or null), `priority` (`high` \| `normal`), `notes`, `done`, `doneAt`, `createdAt` |
@@ -39,3 +39,5 @@ Optional internship map. `{order: number, title, when: string, why: string, item
 ## books/<id>
 
 `{title, author, status: "read"|"reading"|"want", theme, rating: 1-5|null, idea, finishedAt: ISO|null, before: bool}`. `before: true` marks books read before the tracker (no XP).
+
+`settings/main.birthdays`: [{name, md: "MM-DD"}] — edited in Setup as lines «Ім'я — ДД.ММ»; shown in «Чий сьогодні день» (today + next 7 days) and as 🎂 in the calendar. The page also has a fixed list of special days (π day, Programmer's Day, Student's Day…).

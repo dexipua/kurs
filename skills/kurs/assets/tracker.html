@@ -1288,6 +1288,9 @@ function freeWindows(date, from = 9 * 60, to = 22 * 60, min = 60) {
   return out;
 }
 const upcomingExams = (days = 14) => S.schedule.filter(e => isExam(e) && e.date >= TODAY() && e.date <= ymd(addDays(NOW(), days))).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+// Exam slots for different groups («(слот 1 з 3)») count as one exam: one prep plan covers them all.
+const examBase = t => String(t || "").replace(/\s*\(слот[^)]*\)\s*$/, "");
+const hasPrep = e => S.tasks.some(t => t.prepFor && (t.prepFor === e.id || examBase((S.schedule.find(x => x.id === t.prepFor) || {}).title) === examBase(e.title)));
 const daysUntil = k => Math.round((new Date(k + "T12:00:00") - new Date(TODAY() + "T12:00:00")) / 864e5);
 const icsText = v => String(v || "").replace(/\\n/gi, " ").replace(/\\([,;\\])/g, "$1").trim();
 function icsDate(v) {
@@ -1338,7 +1341,7 @@ async function importICS(file) {
 function clearSchedule() { for (const e of S.schedule) write("schedule/" + e.id, () => db.doc("schedule/" + e.id).delete()); S.schedule = []; render(); toast("Розклад очищено"); }
 // Spaced revision before a test: three small steps instead of one night of cramming.
 function addPrep(id) {
-  const e = S.schedule.find(x => x.id === id); if (!e || S.tasks.some(t => t.prepFor === id)) return;
+  const e = S.schedule.find(x => x.id === id); if (!e || hasPrep(e)) return;
   const steps = [[5, "Повторити конспекти й позначити, що незрозуміло"], [3, "Розв'язати пробні або минулорічні задачі"], [1, "Шпаргалка на 1 сторінку і лягти до 00:30"]];
   for (const [d, t] of steps) { const ref = db.collection("tasks").doc(), due = ymd(addDays(new Date(e.date + "T12:00:00"), -d));
     write("tasks/" + ref.id, () => ref.set({ title: `${t}: ${e.title}`, area: "study", due: due < TODAY() ? TODAY() : due, priority: d === 1 ? "high" : "normal", notes: "", done: false, prepFor: id, createdAt: new Date().toISOString() })); }
@@ -1375,7 +1378,7 @@ function schedulePanel() {
     ${bm >= 360 && !isLight(today) ? `<p class="muted" style="margin:0">Насичений день: понад 6 годин пар. Можна зробити його легким, і серія не згорить.</p><div class="actions"><button class="chip-btn" type="button" data-act="light">🌙 Зробити легким</button></div>` : ""}
     ${wins.length ? `<div><p class="muted" style="margin:0 0 6px">Вільні вікна${task ? ` — гарний час для «${esc(task.title)}»` : ""}:</p><div class="freewin">${wins.map(([a, b]) => `<span>${fmtHm(a)}–${fmtHm(b)}</span>`).join("")}</div></div>` : ""}
     ${ex.length ? `<h3 style="font-size:14px;margin:4px 0 0">Контрольні й дедлайни</h3><div class="list">${ex.map(e => `<div class="row" style="grid-template-columns:1fr auto"><div><b>${esc(e.title)}</b><small class="muted"> · ${fmtDate(e.date)}${e.start ? " " + e.start : ""} · ${daysUntil(e.date) ? `через ${daysUntil(e.date)} дн.` : "сьогодні"}</small></div>
-      ${S.tasks.some(t => t.prepFor === e.id) ? `<span class="eyebrow">план є</span>` : daysUntil(e.date) >= 1 ? `<button class="chip-btn" type="button" data-act="prep" data-id="${esc(e.id)}">План підготовки</button>` : ""}</div>`).join("")}</div>` : ""}
+      ${hasPrep(e) ? `<span class="eyebrow">план є</span>` : daysUntil(e.date) >= 1 ? `<button class="chip-btn" type="button" data-act="prep" data-id="${esc(e.id)}">План підготовки</button>` : ""}</div>`).join("")}</div>` : ""}
   </section>`;
 }
 // Every day of the year as one pixel: brighter = more of the daily quest done.

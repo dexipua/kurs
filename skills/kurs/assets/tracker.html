@@ -244,6 +244,17 @@
   @media (prefers-color-scheme: dark) { :root[data-skin="abyss"]:not([data-theme="light"]) { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF } }
   :root[data-skin="abyss"][data-theme="dark"] { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF }
   #view { display: grid; gap: 18px; }
+  .sched { display: grid; gap: 6px; }
+  .sched > div { display: grid; grid-template-columns: 92px 1fr; gap: 2px 10px; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); }
+  .sched > div span { font: 500 13px var(--mono); }
+  .sched > div small { grid-column: 2; color: var(--muted); font-size: 12px; }
+  .sched > div.past { opacity: .5; }
+  .sched > div.now { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+  .sched > div.ex { border-color: var(--brass); }
+  .wins { display: flex; gap: 6px; flex-wrap: wrap; }
+  .wins span { font: 500 12px var(--mono); padding: 4px 8px; border-radius: 999px; border: 1px dashed var(--accent); }
+  .day em { position: absolute; top: 3px; right: 4px; font: 600 9px var(--mono); font-style: normal; opacity: .75; }
+  .day em.ex { color: var(--brass); opacity: 1; }
   .light-on { border-color: var(--good, var(--brass)); }
   .wk-grid { overflow-x: auto; }
   .wk-grid table { border-collapse: collapse; width: 100%; min-width: 420px; font-size: 14px; }
@@ -434,7 +445,7 @@ const DEFAULT_AREAS = [
 const SKINS = [["sea", "Море", "#1D6F80", "#B7841B"], ["forest", "Ліс", "#2E6B3F", "#A8741C"], ["sunset", "Захід сонця", "#B4532A", "#8A5BB0"], ["violet", "Система", "#5843C8", "#B8740A"], ["sakura", "Сакура", "#B83F72", "#2F8574"], ["mono", "Графіт", "#232323", "#8C6A16"], ["neon", "Неон", "#C2187A", "#0E8A9A"], ["sand", "Пісок", "#8A5A2B", "#3E7A6B"], ["lavender", "Лаванда", "#7550C2", "#C2627E"], ["coffee", "Кава", "#6B4430", "#B5873A"], ["aurora", "Північне сяйво", "#0F7A6C", "#7C4DC4"], ["ruby", "Рубін", "#A3243B", "#B07A1E"], ["mastermind", "Стратег", "#14120F", "#D4AF37"], ["noir", "Нуар", "#151517", "#E03A44"], ["abyss", "Безодня", "#0D0F17", "#F2A33A"]];
 const DEFAULT_SETTINGS = { name: "", about: "", skin: "sea", mode: "system", radius: "soft", density: "cozy", font: "modern", tone: "balanced", examMode: false, threshold: 60, areas: DEFAULT_AREAS,
   reminders: "08:00 план на день · 21:00 вечірня перевірка · неділя 19:00 розбір тижня" };
-const S = { habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, roadmap: [], books: [], settings: null, loaded: new Set(), readOnly: false };
+const S = { schedule: [], habits: [], tasks: [], goals: [], notes: [], days: {}, journal: {}, roadmap: [], books: [], settings: null, loaded: new Set(), readOnly: false };
 let db = null, sample = null;
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -805,7 +816,7 @@ function heroPanel() {
     <p class="muted" style="margin:0;font-size:14px">${esc(cur[2])}${next ? ` Наступна форма — «${esc(next[1])}» на ${next[0]} рівні.` : ""}</p>
     <blockquote class="quote">«${esc(text)}»<small>${esc(who)}</small></blockquote></section>`;
 }
-const TODAY_PANELS = [["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
+const TODAY_PANELS = [["sched", "Пари й вільні вікна"], ["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
 const showP = k => !(set().hideToday || []).includes(k);
 let diceNow = "";
 function rollDice() {
@@ -843,6 +854,7 @@ function viewToday() {
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
   ${moodPanel()}
+  ${showP("sched") ? schedulePanel() : ""}
   ${showP("hero") ? heroPanel() : ""}
   ${showP("status") ? statusPanel() : ""}
   ${showP("main") ? mainQuestPanel() : ""}
@@ -1027,7 +1039,11 @@ function achPanel() {
 
 function viewSetup() {
   const s = set();
-  return `<section class="panel"><h2>Про тебе</h2>
+  return `<section class="panel"><div class="panel-head"><h2>Розклад пар</h2><span class="eyebrow num">${S.schedule.length} подій</span></div>
+    <p class="muted" style="margin:0">Трекер покаже пари на «Сьогодні», вільні вікна між ними й контрольні, а насичений день підкаже зробити легким. Найпростіше — попроси Claude синхронізувати розклад з Google Calendar. Або на комп'ютері: Google Calendar → Налаштування → Імпорт і експорт → Експорт, розпакуй архів і вибери .ics свого календаря.</p>
+    <div class="actions"><label class="btn ghost" style="cursor:pointer">Вибрати .ics файл<input type="file" id="icsFile" accept=".ics,text/calendar" hidden></label>
+    ${S.schedule.length ? `<button class="btn ghost" type="button" data-act="clearSched">Очистити розклад</button>` : ""}</div></section>
+  <section class="panel"><h2>Про тебе</h2>
     <p class="muted" style="margin:0">Тренер звертається до тебе на ім'я і враховує, чим ти живеш.</p>
     <div class="grid2"><label class="field">Ім'я<input type="text" id="pName" value="${esc(s.name)}"></label>
     <label class="field">Хто ти й до чого йдеш<input type="text" id="pAbout" value="${esc(s.about)}" placeholder="напр. студент 2 курсу, вчу Python, хочу на стажування"></label></div>
@@ -1197,9 +1213,10 @@ function viewCalendar() {
   const cells = [...Array(42)].map((_, i) => {
     const d = addDays(first, i), k = ymd(d), past = k <= today;
     const p = past ? Math.round(dayRate(k) * 100) : 0, ts = tasksByDay[k] || [], f = (S.days[k] || {}).focus || 0;
+    const dc = classesOn(k), dex = dc.some(isExam);
     const cls = ["day", d.getMonth() !== mm ? "out" : "", k === today ? "today" : "", past && isGood(k) ? "good" : "", p >= 60 ? "hi" : ""].join(" ");
     return `<button type="button" class="${cls}" style="--p:${Math.round(p * .85)}" data-act="calDay" data-date="${k}" aria-pressed="${cal.sel === k}" aria-label="${fmtDate(k)}: ${p}% звичок, задач ${ts.length}">
-      <b>${d.getDate()}</b><span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}${(S.journal[k] || {}).mood ? `<span class="mood" aria-hidden="true">${MOODS[S.journal[k].mood - 1]}</span>` : ""}</button>`;
+      <b>${d.getDate()}</b>${dc.length ? `<em class="${dex ? "ex" : ""}" aria-hidden="true">${dex ? "!" : dc.length}</em>` : ""}<span class="dots">${ts.slice(0, 4).map(t => `<i style="background:${t.done ? "var(--muted)" : esc(area(t.area).color)}"></i>`).join("")}</span>${f ? `<small>${f}′</small>` : ""}${(S.journal[k] || {}).mood ? `<span class="mood" aria-hidden="true">${MOODS[S.journal[k].mood - 1]}</span>` : ""}</button>`;
   }).join("");
   // month summary
   const inMonth = [...Array(new Date(m.getFullYear(), mm + 1, 0).getDate())].map((_, i) => ymd(new Date(m.getFullYear(), mm, i + 1)));
@@ -1213,9 +1230,10 @@ function viewCalendar() {
   return `<section class="panel span"><div class="cal-head"><h2>${esc(m.toLocaleDateString("uk-UA", { month: "long", year: "numeric" }))}</h2>
       <div class="actions"><button class="btn ghost" type="button" data-act="calNav" data-d="-1" aria-label="Попередній місяць">‹</button><button class="btn ghost" type="button" data-act="calNav" data-d="0">Сьогодні</button><button class="btn ghost" type="button" data-act="calNav" data-d="1" aria-label="Наступний місяць">›</button></div></div>
     <div class="cal">${WD.map(w => `<div class="wdn">${w}</div>`).join("")}${cells}</div>
-    <div class="legend"><span><i style="background:color-mix(in srgb, var(--accent) 85%, var(--bg))"></i>більше звичок</span><span><i style="background:var(--brass);border-radius:50%"></i>квест виконано</span><span><i style="background:var(--accent);border-radius:50%;width:8px;height:8px"></i>задачі</span><span>25′ — хвилини фокусу</span></div></section>
+    <div class="legend"><span><i style="background:color-mix(in srgb, var(--accent) 85%, var(--bg))"></i>більше звичок</span><span><i style="background:var(--brass);border-radius:50%"></i>квест виконано</span><span><i style="background:var(--accent);border-radius:50%;width:8px;height:8px"></i>задачі</span><span>25′ — хвилини фокусу</span>${S.schedule.length ? `<span>3 — пари, ! — контрольна</span>` : ""}</div></section>
   <section class="panel"><div class="panel-head"><h2 style="text-transform:capitalize">${esc(title)}</h2>${selPast ? `<span class="eyebrow num">${Math.round(dayRate(sel) * 100)}% · ${dayFocus} хв</span>` : `<span class="eyebrow">попереду</span>`}</div>
     ${selPast ? `<div class="list">${dailyHabits().map(h => habitRow(h, sel)).join("") || `<p class="muted">Звичок немає.</p>`}</div>` : `<p class="muted" style="margin:0">Звички відмічаються в день, коли ти їх робиш. Сюди можна запланувати задачі.</p>`}
+    ${classesOn(sel).length ? `<h3 style="font-size:14px;margin-top:4px">Пари</h3><div class="sched">${classesOn(sel).map(e => `<div class="${isExam(e) ? "ex" : ""}"><span>${e.start ? `${e.start}–${e.end}` : "весь день"}</span><b>${esc(e.title)}</b>${e.place ? `<small>${esc(e.place)}</small>` : ""}</div>`).join("")}</div>` : ""}
     <h3 style="font-size:14px;margin-top:4px">Задачі на цей день</h3>
     <div class="list">${selTasks.map(taskRow).join("") || `<p class="muted">Нічого не заплановано.</p>`}</div>
     <div class="actions"><button class="btn ghost" type="button" data-act="newTaskOn" data-date="${sel}">Додати задачу на цей день</button></div></section>
@@ -1234,6 +1252,91 @@ function weekGrid() {
   return `<section class="panel"><div class="panel-head"><h2>Тиждень у звичках</h2><span class="eyebrow">${fmtDate(ds[0])} – ${fmtDate(ds[6])}</span></div>
     <p class="muted" style="margin:0">Видно, яка звичка тримається, а яка просідає. Те, що просідає, краще спростити, ніж тиснути на себе.</p>
     <div class="wk-grid"><table><thead><tr><th>Звичка</th>${WD.map((w, i) => `<th>${w}${isLight(ds[i]) ? " 🌙" : ""}</th>`).join("")}<th></th></tr></thead><tbody>${hs.map(row).join("")}</tbody></table></div></section>`;
+}
+// ---------- class schedule: imported from .ics or synced by Claude from Google Calendar ----------
+const EXAM_RE = /контрольн|екзамен|іспит|залік|мідтерм|midterm|final|exam|quiz|дедлайн|deadline/i;
+const hm = s => { const [h, m] = String(s || "0:0").split(":").map(Number); return h * 60 + (m || 0); };
+const fmtHm = n => String(Math.floor(n / 60)).padStart(2, "0") + ":" + String(n % 60).padStart(2, "0");
+const isExam = e => e.kind === "exam" || EXAM_RE.test(e.title || "");
+const classesOn = date => S.schedule.filter(e => e.date === date).sort((a, b) => (a.start || "").localeCompare(b.start || ""));
+const busyMin = date => classesOn(date).reduce((a, e) => a + (e.start && e.end ? Math.max(0, hm(e.end) - hm(e.start)) : 0), 0);
+function freeWindows(date, from = 9 * 60, to = 22 * 60, min = 60) {
+  const out = []; let t = from;
+  for (const e of classesOn(date)) { if (!e.start) continue; const a = hm(e.start), b = hm(e.end || e.start); if (a - t >= min) out.push([t, a]); t = Math.max(t, b); }
+  if (to - t >= min) out.push([t, to]);
+  return out;
+}
+const upcomingExams = (days = 14) => S.schedule.filter(e => isExam(e) && e.date >= TODAY() && e.date <= ymd(addDays(NOW(), days))).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+const daysUntil = k => Math.round((new Date(k + "T12:00:00") - new Date(TODAY() + "T12:00:00")) / 864e5);
+const icsText = v => String(v || "").replace(/\\n/gi, " ").replace(/\\([,;\\])/g, "$1").trim();
+function icsDate(v) {
+  const m = /^(\d{4})(\d\d)(\d\d)(?:T(\d\d)(\d\d)\d*(Z)?)?/.exec(v || ""); if (!m) return null;
+  const [, y, mo, d, h, mi, z] = m;
+  if (h === undefined) return { d: new Date(+y, mo - 1, +d), allDay: true };
+  // shortcut: a TZID time is read as this browser's local time; right while the calendar and the browser are both on Kyiv time.
+  return { d: z ? new Date(Date.UTC(+y, mo - 1, +d, +h, +mi)) : new Date(+y, mo - 1, +d, +h, +mi), allDay: false };
+}
+function parseICS(text, from, to) {
+  const out = []; let ev = null;
+  for (const ln of String(text).replace(/\r?\n[ \t]/g, "").split(/\r?\n/)) {
+    if (ln === "BEGIN:VEVENT") { ev = { ex: [] }; continue; }
+    if (ln === "END:VEVENT") { if (ev) icsExpand(ev, from, to, out); ev = null; continue; }
+    const i = ln.indexOf(":"); if (!ev || i < 0) continue;
+    const name = ln.slice(0, i).split(";")[0], val = ln.slice(i + 1);
+    if (name === "EXDATE") ev.ex.push(...val.split(",")); else ev[name] = val;
+  }
+  return out.slice(0, 600);
+}
+function icsExpand(ev, from, to, out) {
+  const st = icsDate(ev.DTSTART); if (!st || ev.STATUS === "CANCELLED") return;
+  const en = icsDate(ev.DTEND), dur = en ? en.d - st.d : 0, title = icsText(ev.SUMMARY) || "Подія", place = icsText(ev.LOCATION);
+  const ex = new Set(ev.ex.map(v => { const x = icsDate(v); return x ? ymd(x.d) : ""; })), hhmm = d => fmtHm(d.getHours() * 60 + d.getMinutes());
+  const push = d => { const k = ymd(d); if (k < from || k > to || ex.has(k)) return;
+    out.push({ title, place, date: k, start: st.allDay ? "" : hhmm(d), end: st.allDay || !dur ? "" : hhmm(new Date(+d + dur)), kind: EXAM_RE.test(title) ? "exam" : "class" }); };
+  const r = Object.fromEntries(String(ev.RRULE || "").split(";").filter(Boolean).map(x => x.split("=")));
+  // shortcut: monthly and yearly repeats import only their first date; class timetables are weekly.
+  if (r.FREQ !== "DAILY" && r.FREQ !== "WEEKLY") return push(st.d);
+  const until = r.UNTIL ? ymd(icsDate(r.UNTIL).d) : to, count = r.COUNT ? +r.COUNT : 1e4, iv = +(r.INTERVAL || 1);
+  const BY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"], wd = r.BYDAY ? r.BYDAY.split(",").map(x => BY.indexOf(x.slice(-2))) : null;
+  for (let i = 0, n = 0; i < 400 && n < count; i++) {
+    const d = new Date(st.d); d.setDate(d.getDate() + i); const k = ymd(d);
+    if (k > until || k > to) break;
+    const w = Math.round((weekStart(d) - weekStart(st.d)) / 6048e5);
+    const ok = r.FREQ === "DAILY" ? i % iv === 0 && (!wd || wd.includes(d.getDay())) : w % iv === 0 && (wd || [st.d.getDay()]).includes(d.getDay());
+    if (ok) { n++; push(d); }
+  }
+}
+const schedId = e => e.date + "_" + (e.start || "allday").replace(":", "") + "_" + [...e.title].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7).toString(36);
+async function importICS(file) {
+  const evs = parseICS(await file.text(), ymd(addDays(NOW(), -7)), ymd(addDays(NOW(), 150)));
+  if (!evs.length) { toast("У файлі немає подій на найближчі 5 місяців"); return; }
+  for (const e of S.schedule.filter(e => e.source === "ics")) write("schedule/" + e.id, () => db.doc("schedule/" + e.id).delete());
+  for (const e of evs) { const id = schedId(e); write("schedule/" + id, () => db.doc("schedule/" + id).set({ ...e, source: "ics" })); }
+  toast(`Розклад імпортовано: ${evs.length} подій`);
+}
+function clearSchedule() { for (const e of S.schedule) write("schedule/" + e.id, () => db.doc("schedule/" + e.id).delete()); S.schedule = []; render(); toast("Розклад очищено"); }
+// Spaced revision before a test: three small steps instead of one night of cramming.
+function addPrep(id) {
+  const e = S.schedule.find(x => x.id === id); if (!e || S.tasks.some(t => t.prepFor === id)) return;
+  const steps = [[5, "Повторити конспекти й позначити, що незрозуміло"], [3, "Розв'язати пробні або минулорічні задачі"], [1, "Шпаргалка на 1 сторінку і лягти до 00:30"]];
+  for (const [d, t] of steps) { const ref = db.collection("tasks").doc(), due = ymd(addDays(new Date(e.date + "T12:00:00"), -d));
+    write("tasks/" + ref.id, () => ref.set({ title: `${t}: ${e.title}`, area: "study", due: due < TODAY() ? TODAY() : due, priority: d === 1 ? "high" : "normal", notes: "", done: false, prepFor: id, createdAt: new Date().toISOString() })); }
+  toast("Додав 3 кроки підготовки в задачі");
+}
+function schedulePanel() {
+  if (!S.schedule.length) return "";
+  const cl = classesOn(TODAY()), ex = upcomingExams(), now = new Date(), nm = now.getHours() * 60 + now.getMinutes(), bm = busyMin(TODAY());
+  const wins = freeWindows(TODAY()).map(([a, b]) => [Math.max(a, Math.ceil(nm / 5) * 5), b]).filter(([a, b]) => b - a >= 45);
+  const next = todayTasks().find(t => !isBonus(t)) || focusTasks().filter(t => !isBonus(t)).sort(taskSort)[0];
+  const row = e => { const st = !e.start ? "" : hm(e.end || e.start) <= nm ? "past" : hm(e.start) <= nm ? "now" : "";
+    return `<div class="${st}${isExam(e) ? " ex" : ""}"><span>${e.start ? `${e.start}–${e.end}` : "весь день"}</span><b>${esc(e.title)}</b>${e.place ? `<small>${esc(e.place)}</small>` : ""}</div>`; };
+  return `<section class="panel"><div class="panel-head"><h2>Пари сьогодні</h2><span class="eyebrow num">${cl.length ? `${cl.length} · ${Math.round(bm / 6) / 10} год` : "вихідний від пар"}</span></div>
+    ${cl.length ? `<div class="sched">${cl.map(row).join("")}</div>` : ""}
+    ${bm >= 360 && !isLight(TODAY()) ? `<p class="muted" style="margin:0">Насичений день: понад 6 годин пар. Можна зробити його легким, і серія не згорить.</p><div class="actions"><button class="chip-btn" type="button" data-act="light">🌙 Зробити легким</button></div>` : ""}
+    ${wins.length ? `<div><p class="muted" style="margin:0 0 6px">Вільні вікна${next ? ` — гарний час для «${esc(next.title)}»` : ""}:</p><div class="wins">${wins.map(([a, b]) => `<span>${fmtHm(a)}–${fmtHm(b)}</span>`).join("")}</div></div>` : ""}
+    ${ex.length ? `<h3 style="font-size:14px;margin:4px 0 0">Контрольні й дедлайни</h3><div class="list">${ex.map(e => `<div class="row" style="grid-template-columns:1fr auto"><div><b>${esc(e.title)}</b><small class="muted"> · ${fmtDate(e.date)}${e.start ? " " + e.start : ""} · ${daysUntil(e.date) ? `через ${daysUntil(e.date)} дн.` : "сьогодні"}</small></div>
+      ${S.tasks.some(t => t.prepFor === e.id) ? `<span class="eyebrow">план є</span>` : daysUntil(e.date) >= 1 ? `<button class="chip-btn" type="button" data-act="prep" data-id="${esc(e.id)}">План підготовки</button>` : ""}</div>`).join("")}</div>` : ""}
+  </section>`;
 }
 // Every day of the year as one pixel: brighter = more of the daily quest done.
 function yearPanel() {
@@ -1725,6 +1828,8 @@ document.addEventListener("click", e => {
   if (act === "jSave") saveJournal(b.dataset.date);
   if (act === "jMic") jMic(b.dataset.date);
   if (act === "dice") rollDice();
+  if (act === "prep") addPrep(b.dataset.id);
+  if (act === "clearSched") clearSchedule();
   if (act === "light") toggleLight();
   if (act === "medMode") { med.mode = b.dataset.m; render(); }
   if (act === "med") medStart(Number(b.dataset.min));
@@ -1765,6 +1870,7 @@ document.addEventListener("click", e => {
 document.addEventListener("change", e => {
   const el = e.target;
   if (el.id === "engTopic") eng.topic = el.value;
+  if (el.id === "icsFile" && el.files[0]) { importICS(el.files[0]); el.value = ""; }
   if (el.id === "lookMode") saveSettings({ mode: el.value });
   if (el.id === "lookRadius") saveSettings({ radius: el.value });
   if (el.id === "lookDensity") saveSettings({ density: el.value });
@@ -1829,6 +1935,7 @@ render();
   db.collection("goals").onSnapshot(list("goals"), fail);
   db.collection("roadmap").onSnapshot(list("roadmap"), fail);
   db.collection("books").onSnapshot(list("books"), fail);
+  db.collection("schedule").onSnapshot(list("schedule"), fail);
   db.collection("notes").orderBy("at", "desc").limit(10).onSnapshot(list("notes"), fail);
   // All days: total XP needs the whole history (about 365 small documents a year).
   db.collection("days").onSnapshot(snap => {

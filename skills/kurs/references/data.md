@@ -6,6 +6,7 @@ All documents live in the tracker's database (`ArtifactData`, `url` = the tracke
 |---|---|
 | `settings/main` | `name`, `about`, `tone` (`soft` \| `balanced` \| `strict`), `examMode` (bool), `threshold` (% of daily habits for the day to count), `areas` [`{id, name, color}`], `reminders` (text shown in Settings) |
 | `habits/<id>` | `title`, `area`, `freq` (`daily` \| `weekly`), `target` (times a week for weekly), `minutes`, `keepInExams` (bool), `active` (bool), `order` |
+| `schedule/<date>_<HHMM>_<hash>` | `title`, `place`, `date`, `start`, `end` ("HH:MM", empty for all-day), `kind` (`class` or `exam`), `source` (`ics` from the page's import, `gcal` when Claude syncs Google Calendar) |
 | `days/<YYYY-MM-DD>` | `date`, `done` {`<habitId>`: true, `penalty`: true}, `focus` (minutes), `light` (true = only core habits count) |
 | `journal/<YYYY-MM-DD>` | `date`, `text`, `mood` (1–5 or null), `at` (ISO time). Private diary: read it only to coach (evening/weekly), never quote it outside the page. |
 | `tasks/<id>` | `title`, `area`, `due` (`YYYY-MM-DD` or null), `priority` (`high` \| `normal`), `notes`, `done`, `doneAt`, `createdAt` |

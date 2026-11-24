@@ -251,8 +251,29 @@
   .sched > div.past { opacity: .5; }
   .sched > div.now { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
   .sched > div.ex { border-color: var(--brass); }
-  .wins { display: flex; gap: 6px; flex-wrap: wrap; }
-  .wins span { font: 500 12px var(--mono); padding: 4px 8px; border-radius: 999px; border: 1px dashed var(--accent); }
+  .freewin { display: flex; gap: 6px; flex-wrap: wrap; }
+  .freewin span { font: 500 12px var(--mono); padding: 4px 8px; border-radius: 999px; border: 1px dashed var(--accent); }
+  .snext { display: grid; gap: 3px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+  .snext.now { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); }
+  .snext.ex { border-color: var(--brass); }
+  .snext small { font: 600 11px var(--mono); letter-spacing: .12em; color: var(--accent); }
+  .snext.ex small { color: var(--brass); }
+  .snext b { font-size: 17px; line-height: 1.25; }
+  .snext span { font: 500 13px var(--mono); color: var(--muted); }
+  .tl { position: relative; height: 18px; border-radius: 6px; background: var(--soft); overflow: hidden; }
+  .tl i { position: absolute; top: 0; bottom: 0; border-radius: 4px; background: color-mix(in srgb, var(--accent) 60%, transparent); }
+  .tl i.past { opacity: .35; }
+  .tl i.ex { background: var(--brass); }
+  .tl em { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); }
+  .tl-axis { position: relative; height: 13px; font: 500 10px var(--mono); color: var(--muted); }
+  .tl-axis span { position: absolute; transform: translateX(-50%); }
+  .slist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+  .slist li { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+  .slist li span { font: 500 12px var(--mono); flex: none; min-width: 40px; }
+  .slist li b { font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+  .slist li small { color: var(--muted); margin-left: auto; white-space: nowrap; font-size: 12px; }
+  .slist li.past { opacity: .5; }
+  .slist li.ex b { color: var(--brass); font-weight: 600; }
   .day em { position: absolute; top: 3px; right: 4px; font: 600 9px var(--mono); font-style: normal; opacity: .75; }
   .day em.ex { color: var(--brass); opacity: 1; }
   .light-on { border-color: var(--good, var(--brass)); }
@@ -1323,17 +1344,36 @@ function addPrep(id) {
     write("tasks/" + ref.id, () => ref.set({ title: `${t}: ${e.title}`, area: "study", due: due < TODAY() ? TODAY() : due, priority: d === 1 ? "high" : "normal", notes: "", done: false, prepFor: id, createdAt: new Date().toISOString() })); }
   toast("Додав 3 кроки підготовки в задачі");
 }
+const durTxt = m => m >= 60 ? `${Math.floor(m / 60)} год${m % 60 ? " " + (m % 60) + " хв" : ""}` : `${m} хв`;
+// Today's classes while any are left; after the last one (or on a free day) the next day with classes, up to a week ahead.
 function schedulePanel() {
   if (!S.schedule.length) return "";
-  const cl = classesOn(TODAY()), ex = upcomingExams(), now = new Date(), nm = now.getHours() * 60 + now.getMinutes(), bm = busyMin(TODAY());
-  const wins = freeWindows(TODAY()).map(([a, b]) => [Math.max(a, Math.ceil(nm / 5) * 5), b]).filter(([a, b]) => b - a >= 45);
-  const next = todayTasks().find(t => !isBonus(t)) || focusTasks().filter(t => !isBonus(t)).sort(taskSort)[0];
-  const row = e => { const st = !e.start ? "" : hm(e.end || e.start) <= nm ? "past" : hm(e.start) <= nm ? "now" : "";
-    return `<div class="${st}${isExam(e) ? " ex" : ""}"><span>${e.start ? `${e.start}–${e.end}` : "весь день"}</span><b>${esc(e.title)}</b>${e.place ? `<small>${esc(e.place)}</small>` : ""}</div>`; };
-  return `<section class="panel"><div class="panel-head"><h2>Пари сьогодні</h2><span class="eyebrow num">${cl.length ? `${cl.length} · ${Math.round(bm / 6) / 10} год` : "вихідний від пар"}</span></div>
-    ${cl.length ? `<div class="sched">${cl.map(row).join("")}</div>` : ""}
-    ${bm >= 360 && !isLight(TODAY()) ? `<p class="muted" style="margin:0">Насичений день: понад 6 годин пар. Можна зробити його легким, і серія не згорить.</p><div class="actions"><button class="chip-btn" type="button" data-act="light">🌙 Зробити легким</button></div>` : ""}
-    ${wins.length ? `<div><p class="muted" style="margin:0 0 6px">Вільні вікна${next ? ` — гарний час для «${esc(next.title)}»` : ""}:</p><div class="wins">${wins.map(([a, b]) => `<span>${fmtHm(a)}–${fmtHm(b)}</span>`).join("")}</div></div>` : ""}
+  const today = TODAY(), now = new Date(), nm = now.getHours() * 60 + now.getMinutes();
+  const todayCl = classesOn(today).filter(e => e.start), left = todayCl.filter(e => hm(e.end || e.start) > nm);
+  let day = today, cl = todayCl;
+  if (!left.length) { day = ""; cl = []; for (let i = 1; i <= 7 && !day; i++) { const k = ymd(addDays(NOW(), i)), c = classesOn(k).filter(e => e.start); if (c.length) { day = k; cl = c; } } }
+  const isToday = day === today, end = e => hm(e.end || e.start);
+  const cur = isToday ? cl.find(e => hm(e.start) <= nm && end(e) > nm) : null, nxt = isToday ? cl.find(e => hm(e.start) > nm) : cl[0], focus = cur || nxt;
+  const dayName = day ? new Date(day + "T12:00:00").toLocaleDateString("uk-UA", { weekday: "long", day: "numeric", month: "short" }) : "";
+  const title = isToday ? "Пари сьогодні" : day === ymd(addDays(NOW(), 1)) ? "Пари завтра" : day ? "Наступні пари" : "Пари";
+  const label = !focus ? "" : cur ? `ЗАРАЗ · ще ${durTxt(end(cur) - nm)}` : isToday ? `ДАЛІ · через ${durTxt(hm(nxt.start) - nm)}` : `ПЕРША · ${dayName}`;
+  // timeline 08:00–21:00, stretched if a class falls outside
+  const t0 = Math.min(8 * 60, ...cl.map(e => hm(e.start))), t1 = Math.max(21 * 60, ...cl.map(end)), pc = m => ((m - t0) / (t1 - t0) * 100).toFixed(2) + "%";
+  const ticks = []; for (let h = Math.ceil(t0 / 60); h * 60 <= t1; h += 3) ticks.push(h);
+  const past = e => isToday && end(e) <= nm, rest = cl.filter(e => e !== focus), gone = rest.filter(past), soon = rest.filter(e => !past(e));
+  const li = e => `<li class="${past(e) ? "past" : ""}${isExam(e) ? " ex" : ""}"><span>${e.start}</span><b>${esc(e.title)}</b>${e.place ? `<small>${esc(e.place.replace(/^Шпака 3, /, "ауд. "))}</small>` : ""}</li>`;
+  const ex = upcomingExams(), bm = busyMin(today);
+  const wins = isToday ? freeWindows(today).map(([a, b]) => [Math.max(a, Math.ceil(nm / 5) * 5), b]).filter(([a, b]) => b - a >= 45) : [];
+  const task = todayTasks().find(t => !isBonus(t)) || focusTasks().filter(t => !isBonus(t)).sort(taskSort)[0];
+  return `<section class="panel"><div class="panel-head"><h2>${title}</h2><span class="eyebrow num">${cl.length ? `${cl.length} · ${durTxt(busyMin(day))}` : "тиждень без пар"}</span></div>
+    ${!isToday && todayCl.length ? `<p class="muted" style="margin:0">Сьогоднішні пари вже закінчились.</p>` : !isToday && day ? `<p class="muted" style="margin:0">Сьогодні пар немає.</p>` : ""}
+    ${focus ? `<div class="snext${cur ? " now" : ""}${isExam(focus) ? " ex" : ""}"><small>${label}</small><b>${esc(focus.title)}</b><span>${focus.start}–${focus.end}${focus.place ? " · " + esc(focus.place) : ""}</span></div>` : ""}
+    ${cl.length ? `<div><div class="tl" role="img" aria-label="Шкала дня: ${cl.map(e => e.start + "–" + e.end).join(", ")}">${cl.map(e => `<i class="${past(e) ? "past" : ""}${isExam(e) ? " ex" : ""}" style="left:${pc(hm(e.start))};width:${pc(t0 + end(e) - hm(e.start))}" title="${e.start}–${e.end} ${esc(e.title)}"></i>`).join("")}${isToday && nm > t0 && nm < t1 ? `<em style="left:${pc(nm)}"></em>` : ""}</div>
+      <div class="tl-axis" aria-hidden="true">${ticks.map(h => `<span style="left:${pc(h * 60)}">${h}:00</span>`).join("")}</div></div>` : ""}
+    ${soon.length ? `<ul class="slist">${soon.map(li).join("")}</ul>` : ""}
+    ${gone.length ? `<details><summary>Минулі сьогодні: ${gone.length}</summary><ul class="slist" style="margin-top:6px">${gone.map(li).join("")}</ul></details>` : ""}
+    ${bm >= 360 && !isLight(today) ? `<p class="muted" style="margin:0">Насичений день: понад 6 годин пар. Можна зробити його легким, і серія не згорить.</p><div class="actions"><button class="chip-btn" type="button" data-act="light">🌙 Зробити легким</button></div>` : ""}
+    ${wins.length ? `<div><p class="muted" style="margin:0 0 6px">Вільні вікна${task ? ` — гарний час для «${esc(task.title)}»` : ""}:</p><div class="freewin">${wins.map(([a, b]) => `<span>${fmtHm(a)}–${fmtHm(b)}</span>`).join("")}</div></div>` : ""}
     ${ex.length ? `<h3 style="font-size:14px;margin:4px 0 0">Контрольні й дедлайни</h3><div class="list">${ex.map(e => `<div class="row" style="grid-template-columns:1fr auto"><div><b>${esc(e.title)}</b><small class="muted"> · ${fmtDate(e.date)}${e.start ? " " + e.start : ""} · ${daysUntil(e.date) ? `через ${daysUntil(e.date)} дн.` : "сьогодні"}</small></div>
       ${S.tasks.some(t => t.prepFor === e.id) ? `<span class="eyebrow">план є</span>` : daysUntil(e.date) >= 1 ? `<button class="chip-btn" type="button" data-act="prep" data-id="${esc(e.id)}">План підготовки</button>` : ""}</div>`).join("")}</div>` : ""}
   </section>`;

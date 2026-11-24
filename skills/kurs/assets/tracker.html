@@ -228,6 +228,15 @@
   @media (prefers-color-scheme: dark) { :root[data-skin="abyss"]:not([data-theme="light"]) { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF } }
   :root[data-skin="abyss"][data-theme="dark"] { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF }
   #view { display: grid; gap: 18px; }
+  .year { display: grid; gap: 3px; }
+  .year-row { display: grid; grid-template-columns: 2.2em repeat(31, minmax(0, 1fr)); gap: 2px; align-items: center; }
+  .year-row span { font: 500 10px var(--mono); color: var(--muted); }
+  .year-row i { display: block; aspect-ratio: 1; border-radius: 2px; background: var(--soft); }
+  .year-row i.fut { background: transparent; outline: 1px solid var(--line); outline-offset: -1px; }
+  .year-row i.today { outline: 2px solid var(--brass); outline-offset: -1px; }
+  .year-legend { display: flex; gap: 4px; align-items: center; font-size: 12px; color: var(--muted); }
+  .year-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .dice { border: 1px dashed var(--brass); border-radius: calc(var(--r) * .6); padding: 10px 12px; display: grid; gap: 6px; }
   :root[data-bg="stars"] body { background-image: radial-gradient(1px 1px at 12% 18%, color-mix(in srgb, var(--ink) 55%, transparent), transparent 60%),
     radial-gradient(1px 1px at 68% 9%, color-mix(in srgb, var(--ink) 45%, transparent), transparent 60%), radial-gradient(1.5px 1.5px at 85% 42%, color-mix(in srgb, var(--brass) 70%, transparent), transparent 60%),
     radial-gradient(1px 1px at 33% 61%, color-mix(in srgb, var(--ink) 40%, transparent), transparent 60%), radial-gradient(1px 1px at 52% 83%, color-mix(in srgb, var(--ink) 50%, transparent), transparent 60%),
@@ -722,6 +731,21 @@ function heroPanel() {
 }
 const TODAY_PANELS = [["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
 const showP = k => !(set().hideToday || []).includes(k);
+let diceNow = "";
+function rollDice() {
+  const t = TODAY(), pool = [];
+  const g = S.goals.find(x => x.id === set().mainQuest), mq = g && (g.steps || []).find(x => !x.done);
+  if (mq) pool.push(`Головний квест: ${mq.t}. Зроби перші 15 хвилин`, `Головний квест: ${mq.t}`);
+  dailyHabits().filter(h => !doneOn(t, h.id)).forEach(h => pool.push(`Звичка: ${h.title}`));
+  todayTasks().forEach(x => pool.push(`Задача: ${x.title}`));
+  const st = rmStages()[rmCurrent(rmStages())], rmNext = st && (st.items || []).find(i => !i.done);
+  if (rmNext) pool.push(`Карта стажування: ${rmNext.t}`);
+  const reading = S.books.find(b => b.status === "reading");
+  if (reading) pool.push(`10 сторінок «${reading.title}»`);
+  pool.push("25 хвилин фокусу без телефона", "5 хвилин медитації «Спокій»", "Пройтись 15 хвилин без навушників", "Випити склянку води і розім'ятись");
+  let pick; do { pick = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && pick === diceNow);
+  diceNow = pick; render();
+}
 function viewToday() {
   const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
@@ -747,7 +771,8 @@ function viewToday() {
   ${showP("principle") ? principlePanel() : ""}
   ${showP("journal") ? journalPanel() : ""}
   ${sample && showP("english") ? englishPanel() : ""}
-  <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><a href="#tasks" class="eyebrow">усі задачі →</a></div>
+  <section class="panel"><div class="panel-head"><h2>Задачі на сьогодні</h2><span style="display:flex;gap:10px;align-items:center"><button class="chip-btn" type="button" data-act="dice">🎲 Що зараз?</button><a href="#tasks" class="eyebrow">усі задачі →</a></span></div>
+    ${diceNow ? `<div class="dice" aria-live="polite"><b>${esc(diceNow)}</b><span class="muted" style="font-size:13px">Не подобається — кинь ще раз. Головне — почати з чогось маленького.</span></div>` : ""}
     <div class="list">${tt.map(taskRow).join("") || `<p class="muted">На сьогодні задач немає.</p>`}</div>
     ${soon.length ? `<details><summary>Найближчі 3 дні: ${soon.length}</summary><div class="list">${soon.map(taskRow).join("")}</div></details>` : ""}</section>
   <section class="panel"><div class="panel-head"><h2>Тренер</h2><span class="eyebrow">Claude</span></div>
@@ -1047,7 +1072,7 @@ function journalPanel(date = TODAY()) {
     <div class="moods" role="group" aria-label="Настрій">${MOODS.map((m, i) => `<button type="button" class="chip-btn" data-act="jMood" data-date="${date}" data-m="${i + 1}" aria-pressed="${mood === i + 1}" aria-label="Настрій ${i + 1} з 5">${m}</button>`).join("")}</div>
     <p class="ask">${esc(ask)}</p>
     <textarea id="jText" data-date="${date}" aria-label="Запис у щоденник" placeholder="Кілька речень про день. Ніхто, крім тебе, цього не побачить.">${esc(text)}</textarea>
-    <div class="actions"><button class="btn primary" type="button" data-act="jSave" data-date="${date}">${e.text ? "Оновити запис" : "Зберегти запис"}</button></div>
+    <div class="actions"><button class="btn primary" type="button" data-act="jSave" data-date="${date}">${e.text ? "Оновити запис" : "Зберегти запис"}</button>${eng.dict ? `<button class="btn ${dictTo === "journal" && eng.listening ? "primary" : "ghost"}" type="button" id="jMic" data-act="jMic" data-date="${date}">${dictTo === "journal" && eng.listening ? "■ Стоп" : "🎙 Надиктувати"}</button>` : ""}</div>
     ${past.length && date === TODAY() ? `<details><summary>Попередні записи: ${past.length}</summary><div style="display:grid;gap:8px;margin-top:10px">${past.map(j => `<div class="jentry"><small>${fmtDate(j.date)} ${j.mood ? MOODS[j.mood - 1] : ""}</small>${esc(j.text)}</div>`).join("")}</div></details>` : ""}</section>`;
 }
 function saveJournal(date) {
@@ -1094,7 +1119,29 @@ function viewCalendar() {
   ${selPast ? journalPanel(sel) : ""}
   <section class="panel"><div class="panel-head"><h2>Підсумок місяця</h2></div>
     <div class="sumgrid"><div><b class="num">${good}/${passed.length}</b><span>днів з виконаним квестом</span></div><div><b class="num">${avg}%</b><span>середнє виконання звичок</span></div>
-    <div><b class="num">${closed}</b><span>задач закрито</span></div><div><b class="num">${focusMin}</b><span>хвилин фокусу</span></div></div></section>`;
+    <div><b class="num">${closed}</b><span>задач закрито</span></div><div><b class="num">${focusMin}</b><span>хвилин фокусу</span></div></div></section>
+  ${yearPanel()}`;
+}
+// Every day of the year as one pixel: brighter = more of the daily quest done.
+function yearPanel() {
+  const y = NOW().getFullYear(), today = TODAY(), MON = ["Січ", "Лют", "Бер", "Кві", "Тра", "Чер", "Лип", "Сер", "Вер", "Жов", "Лис", "Гру"];
+  let good = 0, tracked = 0;
+  const rows = MON.map((n, mo) => {
+    const len = new Date(y, mo + 1, 0).getDate();
+    return `<div class="year-row"><span>${n}</span>${[...Array(31)].map((_, i) => {
+      if (i >= len) return "<i style=\"visibility:hidden\"></i>";
+      const k = `${y}-${pad(mo + 1)}-${pad(i + 1)}`;
+      if (k > today) return `<i class="fut"></i>`;
+      const has = !!S.days[k], p = has ? Math.round(dayRate(k) * 100) : 0;
+      if (has) { tracked++; if (isGood(k)) good++; }
+      const style = has && p ? ` style="background:color-mix(in srgb, var(--accent) ${25 + Math.round(p * 0.75)}%, var(--soft))"` : "";
+      return `<i class="${k === today ? "today" : ""}"${style} title="${fmtDate(k)}${has ? ": " + p + "%" : ""}"></i>`;
+    }).join("")}</div>`;
+  }).join("");
+  return `<section class="panel"><div class="panel-head"><h2>Мій ${y} у пікселях</h2><span class="eyebrow num">${good} з ${tracked} днів</span></div>
+    <p class="muted" style="margin:0">Кожен квадратик — день. Що яскравіший, то більше щоденного квесту виконано. Через рік тут буде твоя картина року.</p>
+    <div class="year" role="img" aria-label="Виконано квест ${good} з ${tracked} днів цього року">${rows}</div>
+    <div class="year-legend"><span>менше</span>${[0, 40, 70, 100].map(p => `<i style="background:${p ? `color-mix(in srgb, var(--accent) ${25 + Math.round(p * 0.75)}%, var(--soft))` : "var(--soft)"}"></i>`).join("")}<span>більше</span></div></section>`;
 }
 
 // ---------- dialogs ----------
@@ -1514,6 +1561,7 @@ ${dialogText}`, { cache: false, onText: ({ text: t }) => { eng.feedback = t; fb.
 function engMic() {
   if (!eng.dict) return;
   if (eng.listening) { eng.dict.stop().catch(() => {}); return; }
+  dictTo = "eng";
   eng.dict.start({ language: "en" }).catch(e => {
     if (e && (e.code === "not_granted" || e.code === "unavailable")) { eng.dict = null; engRender(); toast("Голосове введення недоступне, пиши текстом"); }
   });
@@ -1523,15 +1571,32 @@ function openEnglish() {
   $("#engTopic").value = eng.topic;
   $("#eng").showModal();
 }
+let dictTo = "eng";
+const dictBox = () => $(dictTo === "journal" ? "#jText" : "#engText");
+function jMic(date) {
+  if (!eng.dict) return;
+  if (eng.listening) { eng.dict.stop().catch(() => {}); return; }
+  dictTo = "journal";
+  eng.dict.start({ language: "uk" }).catch(e => {
+    if (e && (e.code === "not_granted" || e.code === "unavailable")) { eng.dict = null; render(); toast("Голосове введення недоступне, пиши текстом"); }
+  });
+}
 async function engInit() {
   const c = window.claude; if (!c) return;
   const [d, t] = await Promise.all([c.use("dictation").catch(() => null), c.use("tts").catch(() => null)]);
   eng.dict = d; eng.tts = t;
   if (d) {
     let partialBase = "";
-    d.onState(({ state }) => { eng.listening = state === "listening" || state === "starting"; if (state === "listening") partialBase = $("#engText").value; engRender(); });
-    d.onPartial(({ text }) => { $("#engText").value = (partialBase ? partialBase + " " : "") + text; });
-    d.onFinal(({ text }) => { partialBase = ((partialBase ? partialBase + " " : "") + text).trim(); $("#engText").value = partialBase; });
+    // one recognizer, two boxes: dictTo says which one is listening
+    const sync = v => { const el = dictBox(); if (!el) return; el.value = v; if (dictTo === "journal") { const dt = el.dataset.date; jDraft[dt] = { ...jDraft[dt], text: v }; } };
+    d.onState(({ state }) => {
+      eng.listening = state === "listening" || state === "starting";
+      if (state === "listening") partialBase = (dictBox() || {}).value || "";
+      if (dictTo === "journal") { const m = $("#jMic"); if (m) { m.textContent = eng.listening ? "■ Стоп" : "🎙 Надиктувати"; m.classList.toggle("primary", eng.listening); m.classList.toggle("ghost", !eng.listening); } if (!eng.listening) dictTo = "eng"; }
+      else engRender();
+    });
+    d.onPartial(({ text }) => sync((partialBase ? partialBase + " " : "") + text));
+    d.onFinal(({ text }) => { partialBase = ((partialBase ? partialBase + " " : "") + text).trim(); sync(partialBase); });
   }
 }
 
@@ -1545,6 +1610,8 @@ document.addEventListener("click", e => {
   if (act === "newTaskOn") taskDialog(null, b.dataset.date);
   if (act === "jMood") { const dt = b.dataset.date; jDraft[dt] = { ...jDraft[dt], mood: Number(b.dataset.m) }; render(); }
   if (act === "jSave") saveJournal(b.dataset.date);
+  if (act === "jMic") jMic(b.dataset.date);
+  if (act === "dice") rollDice();
   if (act === "medMode") { med.mode = b.dataset.m; render(); }
   if (act === "med") medStart(Number(b.dataset.min));
   if (act === "medStop") medStop(false);
@@ -1633,7 +1700,7 @@ render();
   db = c ? await c.use("db") : null;
   if (!db) { $("#status").textContent = "Відкрий цю сторінку на claude.ai у своєму акаунті, щоб побачити й зберігати свій курс."; return; }
   c.use("sample").then(s => { sample = s; render(); });
-  engInit();
+  engInit().then(render);
   const timer = setTimeout(() => { $("#status").hidden = false; $("#status").textContent = "Дані поки не доходять. Можливо, немає з'єднання; сторінка оновиться сама."; }, 10000);
   const need = ["habits", "tasks", "goals", "notes", "days", "settings"];
   const got = (k, snap) => {

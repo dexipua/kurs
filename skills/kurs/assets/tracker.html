@@ -228,6 +228,16 @@
   @media (prefers-color-scheme: dark) { :root[data-skin="abyss"]:not([data-theme="light"]) { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF } }
   :root[data-skin="abyss"][data-theme="dark"] { --bg: #05060A; --surface: #0D0F17; --soft: #151826; --line: #222639; --accent: #F2A33A; --accent-ink: #1A0E02; --brass: #7FA7FF }
   #view { display: grid; gap: 18px; }
+  .light-on { border-color: var(--good, var(--brass)); }
+  .wk-grid { overflow-x: auto; }
+  .wk-grid table { border-collapse: collapse; width: 100%; min-width: 420px; font-size: 14px; }
+  .wk-grid th, .wk-grid td { padding: 5px 3px; text-align: center; border-bottom: 1px solid var(--line); }
+  .wk-grid th { font: 500 11px var(--mono); color: var(--muted); }
+  .wk-grid td:first-child, .wk-grid th:first-child { text-align: left; }
+  .wk-grid i { display: inline-block; width: 13px; height: 13px; border-radius: 3px; background: var(--soft); vertical-align: middle; }
+  .wk-grid i.on { background: var(--accent); }
+  .wk-grid i.fut { background: transparent; outline: 1px dashed var(--line); outline-offset: -1px; }
+  .wk-grid td.n { font: 500 12px var(--mono); text-align: right; }
   .year { display: grid; gap: 3px; }
   .year-row { display: grid; grid-template-columns: 2.2em repeat(31, minmax(0, 1fr)); gap: 2px; align-items: center; }
   .year-row span { font: 500 10px var(--mono); color: var(--muted); }
@@ -451,8 +461,12 @@ const activeHabits = () => S.habits.filter(h => h.active !== false && (!set().ex
 const dailyHabits = () => activeHabits().filter(h => h.freq !== "weekly");
 const weeklyHabits = () => activeHabits().filter(h => h.freq === "weekly");
 const doneOn = (date, id) => !!(S.days[date] && S.days[date].done && S.days[date].done[id]);
+const isLight = date => !!(S.days[date] && S.days[date].light);
+// shortcut: core habits are found by title; add `core: true` to a habit to pick it explicitly.
+const coreHabits = () => { const all = dailyHabits(), c = all.filter(h => h.core || /догляд|прогулянк|спати/i.test(h.title || "")); return c.length ? c : all.slice(0, 3); };
+const questHabits = date => isLight(date) ? coreHabits() : dailyHabits();
 function dayRate(date) {
-  const hs = dailyHabits(); if (!hs.length) return 0;
+  const hs = questHabits(date); if (!hs.length) return 0;
   return hs.filter(h => doneOn(date, h.id)).length / hs.length;
 }
 const isGood = date => dailyHabits().length > 0 && dayRate(date) * 100 >= set().threshold;
@@ -579,7 +593,13 @@ function toggleHabit(id, date = TODAY()) {
   }
   S.days = { ...S.days, [date]: { ...day, date, done } };
   render();
-  write("days/" + date, () => db.doc("days/" + date).set({ date, done, focus: day.focus || 0 }));
+  write("days/" + date, () => db.doc("days/" + date).set({ date, done, focus: day.focus || 0, light: !!day.light }));
+}
+function toggleLight(date = TODAY()) {
+  const day = S.days[date] || { date, done: {} }, light = !day.light;
+  S.days = { ...S.days, [date]: { ...day, date, light } };
+  render(); toast(light ? "Легкий день: рахуються лише базові звички" : "Звичайний день");
+  write("days/" + date, () => db.doc("days/" + date).set({ date, done: day.done || {}, focus: day.focus || 0, light }));
 }
 function toggleTask(t) {
   const done = !t.done;
@@ -746,14 +766,27 @@ function rollDice() {
   let pick; do { pick = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && pick === diceNow);
   diceNow = pick; render();
 }
+function lowMoodDays() {
+  let n = 0, d = NOW();
+  if (!(S.journal[ymd(d)] || {}).mood) d = addDays(d, -1);
+  for (let i = 0; i < 14; i++) { const m = (S.journal[ymd(d)] || {}).mood; if (!m || m > 2) break; n++; d = addDays(d, -1); }
+  return n;
+}
+function moodPanel() {
+  const n = lowMoodDays(); if (n < 3) return "";
+  return `<section class="panel exam span"><b>${n} дні поспіль настрій низький</b>
+    <span>Це не лінь, а сигнал втоми. Сьогодні можна зробити легкий день, лягти раніше й поговорити з кимось близьким наживо. Якщо так триває понад тиждень, сходи до психолога KSE: це нормально.</span>
+    ${isLight(TODAY()) ? "" : `<div class="actions"><button class="btn primary" type="button" data-act="light">Зробити сьогодні легкий день</button></div>`}</section>`;
+}
 function viewToday() {
-  const hs = dailyHabits(), done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
+  const light = isLight(TODAY()), hs = questHabits(TODAY()), rest = light ? dailyHabits().filter(h => !hs.includes(h)) : [], done = hs.filter(h => doneOn(TODAY(), h.id)).length, p = hs.length ? Math.round(100 * done / hs.length) : 0;
   const tt = todayTasks(), wk = weeklyHabits(), missed = missedDaysInRow();
   const soon = focusTasks().filter(t => t.due && t.due > TODAY() && t.due <= ymd(addDays(NOW(), 3))).sort(taskSort);
   return `
   ${set().examMode ? `<div class="panel exam span"><b>Режим контрольних</b><span class="muted">Лишаю тільки навчання і звички, які ти позначив як «у контрольні теж». Серія не згорить.</span></div>` : ""}
   ${missed >= 2 ? `<div class="panel exam span"><b>${missed} дні без жодної позначки</b><span>Не страшно. Зроби сьогодні одну найменшу звичку, і ти знову на курсі.</span></div>` : ""}
   ${lateNight() ? `<div class="panel exam span"><b>Вже ніч, ${new Date().toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}</b><span>Відміть, що встиг, і лягай. До 04:00 позначки ще йдуть у вчорашній день, тож нічого не згорить. Сон — теж частина курсу.</span></div>` : ""}
+  ${moodPanel()}
   ${showP("hero") ? heroPanel() : ""}
   ${showP("status") ? statusPanel() : ""}
   ${showP("main") ? mainQuestPanel() : ""}
@@ -761,8 +794,11 @@ function viewToday() {
     <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
     <div class="list">${habitRow({ id: "penalty", title: "20 хв ходьби або 30 віджимань", area: "body" })}</div></section>` : ""}
   <section class="panel"><div class="gauge">${ring(p)}<div><h2>План дня</h2><p class="muted" style="margin:4px 0 10px">${done} з ${hs.length} звичок · мета ${set().threshold}%</p>${weekStrip()}</div></div></section>
-  <section class="panel"><div class="panel-head"><h2>Щоденний квест</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
-    <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div></section>
+  <section class="panel${light ? " light-on" : ""}"><div class="panel-head"><h2>${light ? "Легкий день" : "Щоденний квест"}</h2>${isGood(TODAY()) ? `<span class="quest-done">ВИКОНАНО · +${XP.quest}</span>` : `<span class="eyebrow">${done}/${hs.length} · нагорода +${XP.quest}</span>`}</div>
+    ${light ? `<p class="muted" style="margin:0">Сьогодні рахуються лише базові звички. Серія не згорить. Решту можна зробити за бажанням.</p>` : ""}
+    <div class="list">${hs.map(h => habitRow(h)).join("") || `<p class="muted">Звичок поки немає. Додай першу у вкладці «Звички».</p>`}</div>
+    ${rest.length ? `<details><summary>За бажанням: ${rest.filter(h => doneOn(TODAY(), h.id)).length} з ${rest.length}</summary><div class="list">${rest.map(h => habitRow(h)).join("")}</div></details>` : ""}
+    ${dailyHabits().length ? `<div class="actions"><button class="chip-btn" type="button" data-act="light" aria-pressed="${light}">${light ? "↩ Повернути звичайний день" : "🌙 Важкий день? Зробити легким"}</button></div>` : ""}</section>
   ${wk.length ? `<section class="panel"><div class="panel-head"><h2>Цього тижня</h2></div><div class="list">${wk.map(h => habitRow(h)).join("")}</div></section>` : ""}
   ${showP("wins") ? winsPanel() : ""}
   ${showP("map") ? roadmapMini() : ""}
@@ -1120,7 +1156,17 @@ function viewCalendar() {
   <section class="panel"><div class="panel-head"><h2>Підсумок місяця</h2></div>
     <div class="sumgrid"><div><b class="num">${good}/${passed.length}</b><span>днів з виконаним квестом</span></div><div><b class="num">${avg}%</b><span>середнє виконання звичок</span></div>
     <div><b class="num">${closed}</b><span>задач закрито</span></div><div><b class="num">${focusMin}</b><span>хвилин фокусу</span></div></div></section>
+  ${weekGrid()}
   ${yearPanel()}`;
+}
+function weekGrid() {
+  const ws = weekStart(NOW()), today = TODAY(), ds = [...Array(7)].map((_, i) => ymd(addDays(ws, i))), hs = activeHabits();
+  if (!hs.length) return "";
+  const row = h => { const n = ds.filter(k => doneOn(k, h.id)).length;
+    return `<tr><td>${esc(h.title)}</td>${ds.map(k => `<td><i class="${k > today ? "fut" : doneOn(k, h.id) ? "on" : ""}" title="${fmtDate(k)}"></i></td>`).join("")}<td class="n">${n}${h.freq === "weekly" ? "" : "/" + ds.filter(k => k <= today).length}</td></tr>`; };
+  return `<section class="panel"><div class="panel-head"><h2>Тиждень у звичках</h2><span class="eyebrow">${fmtDate(ds[0])} – ${fmtDate(ds[6])}</span></div>
+    <p class="muted" style="margin:0">Видно, яка звичка тримається, а яка просідає. Те, що просідає, краще спростити, ніж тиснути на себе.</p>
+    <div class="wk-grid"><table><thead><tr><th>Звичка</th>${WD.map((w, i) => `<th>${w}${isLight(ds[i]) ? " 🌙" : ""}</th>`).join("")}<th></th></tr></thead><tbody>${hs.map(row).join("")}</tbody></table></div></section>`;
 }
 // Every day of the year as one pixel: brighter = more of the daily quest done.
 function yearPanel() {
@@ -1401,7 +1447,7 @@ function focusStop(finished) {
   if (done > 0) {
     const date = TODAY(), day = S.days[date] || { date, done: {} }, total = (day.focus || 0) + done;
     S.days = { ...S.days, [date]: { ...day, date, focus: total } };
-    write("days/" + date, () => db.doc("days/" + date).set({ date, done: day.done || {}, focus: total }));
+    write("days/" + date, () => db.doc("days/" + date).set({ date, done: day.done || {}, focus: total, light: !!day.light }));
     toast(finished ? `Фокус-сесію завершено: ${done} хв, +${Math.round(done / 2)} досвіду` : `Зараховано ${done} хв фокусу`);
   }
   if (finished) { focusBeep(); confetti(24); }
@@ -1612,6 +1658,7 @@ document.addEventListener("click", e => {
   if (act === "jSave") saveJournal(b.dataset.date);
   if (act === "jMic") jMic(b.dataset.date);
   if (act === "dice") rollDice();
+  if (act === "light") toggleLight();
   if (act === "medMode") { med.mode = b.dataset.m; render(); }
   if (act === "med") medStart(Number(b.dataset.min));
   if (act === "medStop") medStop(false);

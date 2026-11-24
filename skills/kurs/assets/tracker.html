@@ -1254,7 +1254,7 @@ function viewCalendar() {
     <div class="legend"><span><i style="background:color-mix(in srgb, var(--accent) 85%, var(--bg))"></i>більше звичок</span><span><i style="background:var(--brass);border-radius:50%"></i>квест виконано</span><span><i style="background:var(--accent);border-radius:50%;width:8px;height:8px"></i>задачі</span><span>25′ — хвилини фокусу</span>${S.schedule.length ? `<span>3 — пари, ! — контрольна</span>` : ""}</div></section>
   <section class="panel"><div class="panel-head"><h2 style="text-transform:capitalize">${esc(title)}</h2>${selPast ? `<span class="eyebrow num">${Math.round(dayRate(sel) * 100)}% · ${dayFocus} хв</span>` : `<span class="eyebrow">попереду</span>`}</div>
     ${selPast ? `<div class="list">${dailyHabits().map(h => habitRow(h, sel)).join("") || `<p class="muted">Звичок немає.</p>`}</div>` : `<p class="muted" style="margin:0">Звички відмічаються в день, коли ти їх робиш. Сюди можна запланувати задачі.</p>`}
-    ${classesOn(sel).length ? `<h3 style="font-size:14px;margin-top:4px">Пари</h3><div class="sched">${classesOn(sel).map(e => `<div class="${isExam(e) ? "ex" : ""}"><span>${e.start ? `${e.start}–${e.end}` : "весь день"}</span><b>${esc(e.title)}</b>${e.place ? `<small>${esc(e.place)}</small>` : ""}</div>`).join("")}</div>` : ""}
+    ${classesOn(sel).length ? `<h3 style="font-size:14px;margin-top:4px">Пари</h3><div class="sched">${classesOn(sel).map(e => `<div class="${isExam(e) ? "ex" : ""}"><span>${e.start ? `${e.start}–${e.end}` : "весь день"}</span><b>${esc(e.title)}</b>${e.place || e.shelter ? `<small>${[e.place && esc(e.place), e.shelter && "🛡 укриття " + esc(e.shelter)].filter(Boolean).join(" · ")}</small>` : ""}</div>`).join("")}</div>` : ""}
     <h3 style="font-size:14px;margin-top:4px">Задачі на цей день</h3>
     <div class="list">${selTasks.map(taskRow).join("") || `<p class="muted">Нічого не заплановано.</p>`}</div>
     <div class="actions"><button class="btn ghost" type="button" data-act="newTaskOn" data-date="${sel}">Додати задачу на цей день</button></div></section>
@@ -1364,13 +1364,13 @@ function schedulePanel() {
   const t0 = Math.min(8 * 60, ...cl.map(e => hm(e.start))), t1 = Math.max(21 * 60, ...cl.map(end)), pc = m => ((m - t0) / (t1 - t0) * 100).toFixed(2) + "%";
   const ticks = []; for (let h = Math.ceil(t0 / 60); h * 60 <= t1; h += 3) ticks.push(h);
   const past = e => isToday && end(e) <= nm, rest = cl.filter(e => e !== focus), gone = rest.filter(past), soon = rest.filter(e => !past(e));
-  const li = e => `<li class="${past(e) ? "past" : ""}${isExam(e) ? " ex" : ""}"><span>${e.start}</span><b>${esc(e.title)}</b>${e.place ? `<small>${esc(e.place.replace(/^Шпака 3, /, "ауд. "))}</small>` : ""}</li>`;
+  const li = e => `<li class="${past(e) ? "past" : ""}${isExam(e) ? " ex" : ""}"><span>${e.start}</span><b>${esc(e.title)}</b>${e.place || e.shelter ? `<small>${[e.place && esc(e.place.replace(/^Шпака 3, /, "ауд. ")), e.shelter && "🛡 " + esc(e.shelter)].filter(Boolean).join(" · ")}</small>` : ""}</li>`;
   const ex = upcomingExams(), bm = busyMin(today);
   const wins = isToday ? freeWindows(today).map(([a, b]) => [Math.max(a, Math.ceil(nm / 5) * 5), b]).filter(([a, b]) => b - a >= 45) : [];
   const task = todayTasks().find(t => !isBonus(t)) || focusTasks().filter(t => !isBonus(t)).sort(taskSort)[0];
-  return `<section class="panel"><div class="panel-head"><h2>${title}</h2><span class="eyebrow num">${cl.length ? `${cl.length} · ${durTxt(busyMin(day))}` : "тиждень без пар"}</span></div>
+  return `<section class="panel span"><div class="panel-head"><h2>${title}</h2><span class="eyebrow num">${cl.length ? `${cl.length} · ${durTxt(busyMin(day))}` : "тиждень без пар"}</span></div>
     ${!isToday && todayCl.length ? `<p class="muted" style="margin:0">Сьогоднішні пари вже закінчились.</p>` : !isToday && day ? `<p class="muted" style="margin:0">Сьогодні пар немає.</p>` : ""}
-    ${focus ? `<div class="snext${cur ? " now" : ""}${isExam(focus) ? " ex" : ""}"><small>${label}</small><b>${esc(focus.title)}</b><span>${focus.start}–${focus.end}${focus.place ? " · " + esc(focus.place) : ""}</span></div>` : ""}
+    ${focus ? `<div class="snext${cur ? " now" : ""}${isExam(focus) ? " ex" : ""}"><small>${label}</small><b>${esc(focus.title)}</b><span>${focus.start}–${focus.end}${focus.place ? " · " + esc(focus.place) : ""}</span>${focus.shelter ? `<span>🛡 укриття ${esc(focus.shelter)}</span>` : ""}</div>` : ""}
     ${cl.length ? `<div><div class="tl" role="img" aria-label="Шкала дня: ${cl.map(e => e.start + "–" + e.end).join(", ")}">${cl.map(e => `<i class="${past(e) ? "past" : ""}${isExam(e) ? " ex" : ""}" style="left:${pc(hm(e.start))};width:${pc(t0 + end(e) - hm(e.start))}" title="${e.start}–${e.end} ${esc(e.title)}"></i>`).join("")}${isToday && nm > t0 && nm < t1 ? `<em style="left:${pc(nm)}"></em>` : ""}</div>
       <div class="tl-axis" aria-hidden="true">${ticks.map(h => `<span style="left:${pc(h * 60)}">${h}:00</span>`).join("")}</div></div>` : ""}
     ${soon.length ? `<ul class="slist">${soon.map(li).join("")}</ul>` : ""}

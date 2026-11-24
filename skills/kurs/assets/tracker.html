@@ -131,6 +131,22 @@
   .ach div small { color: var(--muted); font-size: 12px; }
   .ach div.locked { opacity: .45; }
   .ach div.got { border-color: var(--brass); }
+  .ach div.secret.locked { opacity: .8; border-style: dashed; background: repeating-linear-gradient(135deg, transparent 0 8px, color-mix(in srgb, var(--ink) 4%, transparent) 8px 9px); }
+  .ach div.secret.locked b { font-family: var(--mono); letter-spacing: .2em; }
+  .ach div.secret.locked small { font-style: italic; }
+  .ach div.secret.got { border-color: var(--accent); background: radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); }
+  .ach-filter { display: flex; gap: 6px; flex-wrap: wrap; }
+  .achpop { position: fixed; inset: 0; z-index: 21; display: grid; place-items: center; background: rgb(4 6 12 / .62); padding: 24px; cursor: pointer; }
+  .achpop > div { position: relative; overflow: hidden; background: var(--surface); border: 2px solid var(--brass); border-radius: 18px; padding: 26px 26px 22px; text-align: center; display: grid; gap: 8px; max-width: 330px; box-shadow: 0 0 70px -12px var(--brass); animation: burst .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+  .achpop .medal { width: 74px; height: 74px; margin: 0 auto 4px; border-radius: 50%; display: grid; place-items: center; font-size: 34px;
+    background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--brass) 55%, #fff), var(--brass) 55%, color-mix(in srgb, var(--brass) 60%, #000)); color: #1b1305; box-shadow: 0 0 0 6px color-mix(in srgb, var(--brass) 25%, transparent); }
+  .achpop b { font: 700 12px var(--mono); letter-spacing: .16em; color: var(--brass); }
+  .achpop strong { font: 700 24px/1.15 var(--display); }
+  .achpop small { font-size: 13px; color: var(--muted); }
+  .achpop.secret > div { border-color: var(--accent); box-shadow: 0 0 90px -10px var(--accent); }
+  .achpop.secret .medal { background: radial-gradient(circle, #000 42%, color-mix(in srgb, var(--accent) 80%, transparent) 46%, transparent 70%); color: var(--accent); box-shadow: none; animation: hole 2.4s ease-in-out infinite; }
+  .achpop.secret b { color: var(--accent); }
+  @keyframes hole { 50% { transform: scale(1.12) rotate(18deg); filter: brightness(1.3); } }
   .levelup { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; background: rgb(8 16 22 / .55); padding: 24px; }
   .levelup div { background: var(--surface); border: 2px solid var(--brass); border-radius: 16px; padding: 22px 26px; text-align: center; display: grid; gap: 6px; max-width: 320px; }
   .levelup b { font: 700 13px var(--mono); letter-spacing: .14em; color: var(--brass); }
@@ -555,8 +571,48 @@ function achievements(g) {
     ["Спокійний центр", "7 днів медитації", habitDays(/медитац/i) >= 7], ["Маса росте", "30 днів щоденника", habitDays(/щоденник/i) >= 30],
     ["Квазар", "10 кроків «Карти стажування»", S.roadmap.reduce((n, x) => n + (x.items || []).filter(i => i.done).length, 0) >= 10],
     ["Головний квест", "Пройти головний квест до кінця", !!S.goals.find(x => x.id === set().mainQuest && goalProgress(x) === 100)],
+    ["Перший крок", "Виконати перший крок будь-якої цілі", S.goals.some(x => (x.steps || []).some(st => st.done))],
+    ["Хет-трик", "Закрити 3 задачі за один день", maxPerDay(S.tasks.filter(t => t.done && t.doneAt).map(t => ymd(new Date(new Date(t.doneAt) - DAY_START_HOUR * 36e5)))) >= 3],
+    ["Тиждень заліза", "3 тренування за один тиждень", maxPerDay(daysWith(/тренуван/i).map(k => ymd(weekStart(new Date(k + "T12:00:00"))))) >= 3],
+    ["Гросмейстерська витримка", "30 днів шахів", habitDays(/шах/i) >= 30],
+    ["Свіжа сторінка", "Дочитати книгу, відкриту в трекері", S.books.some(b => b.status === "read" && !b.before)],
+    ["Голос", "7 записів у щоденнику", Object.values(S.journal).filter(j => (j.text || "").trim()).length >= 7],
+    // secret: [name, riddle, ok, true, what it was]
+    ["Полярна зірка", "Хто знає, куди йде, тому світить одна зірка.", !!(set().vision && set().mainQuest), true, "Задати «Куди я йду» і головний квест"],
+    ["Повний місяць", "Кругле буває не лише на небі.", Object.keys(S.days).some(k => !isLight(k) && dailyHabits().length && dailyHabits().every(h => doneOn(k, h.id))), true, "Виконати 100% звичок за день"],
+    ["Тиша опівночі", "Годинник ще не пробив першу, а ти вже там, де сни. Тричі.", habitDays(/спати/i) >= 3, true, "3 ночі до 01:00"],
+    ["Відпочинок воїна", "Навіть Сунь-цзи знав, коли не битися.", Object.keys(S.days).some(isLight), true, "Взяти легкий день"],
+    ["Темна матерія", "Її не видно, але саме вона тримає галактику разом.", habitDays(/догляд/i) >= 14, true, "14 днів догляду за собою"],
+    ["Подвійна зірка", "Дві зорі світять яскравіше, ніж одна.", habitDays(/поспілкуватися|друг/i) >= 10, true, "10 днів спілкування з людьми"],
+    ["Кротовина", "Шлях крізь простір коротший, ніж здається.", S.tasks.some(t => t.done && t.due && t.doneAt && ymd(new Date(t.doneAt)) <= ymd(addDays(new Date(t.due + "T12:00:00"), -3))), true, "Закрити задачу за 3+ дні до дедлайну"],
+    ["Сингулярність", "Усе стискається в одну точку, і там народжується нове.", (() => { const g = S.goals.find(x => x.id === set().mainQuest); return !!g && (g.steps || []).some(st => st.done && st.at && isGood(ymd(new Date(new Date(st.at) - DAY_START_HOUR * 36e5)))); })(), true, "Крок головного квесту й щоденний квест в один день"],
+    ["Ехо", "Скажи світові, і він відповість.", habitDays(/build in public/i) >= 1, true, "Перший build in public"],
+    ["Червоне зміщення", "Що далі летиш, то червоніше світло.", ms >= 14, true, "14 днів поспіль"],
+    ["Безодня дивиться", "Якщо довго дивишся в безодню…", set().skin === "abyss", true, "Обрати тему «Безодня»"],
+    ["Тринадцятий", "Число, якого бояться. Але не ти.", Object.keys(S.days).length >= 13, true, "13 днів у трекері"],
   ];
 }
+const maxPerDay = keys => Math.max(0, ...Object.values(keys.reduce((m, k) => (m[k] = (m[k] || 0) + 1, m), {})));
+const daysWith = re => { const ids = S.habits.filter(h => re.test(h.title || "")).map(h => h.id); return Object.keys(S.days).filter(k => ids.some(id => doneOn(k, id))); };
+// New unlocks pop up once; the seen list lives in this browser only.
+// shortcut: on a new device every earned achievement is treated as already seen, so nothing replays (secrets excepted).
+let achSeen = null;
+function checkAchievements() {
+  if (!["habits", "tasks", "goals", "days", "roadmap", "books", "journal", "settings"].every(n => S.loaded.has(n))) return;
+  const got = achievements(game()).filter(a => a[2]);
+  if (achSeen === null) { try { achSeen = JSON.parse(localStorage.getItem("kurs.ach") || "null"); } catch {} if (!Array.isArray(achSeen)) achSeen = got.filter(a => !a[3]).map(a => a[0]); } // secrets you already earned still get their reveal
+  const fresh = got.filter(a => !achSeen.includes(a[0]));
+  if (!fresh.length) return;
+  achSeen.push(...fresh.map(a => a[0])); saveSeen();
+  const [n, d, , secret, reveal] = fresh[0];
+  if (document.querySelector(".achpop")) return;
+  const o = document.createElement("div"); o.className = "achpop" + (secret ? " secret" : ""); o.setAttribute("role", "status");
+  o.innerHTML = `<div><span class="medal" aria-hidden="true">${secret ? "✦" : "★"}</span><b>${secret ? "ТАЄМНЕ ДОСЯГНЕННЯ" : "ДОСЯГНЕННЯ ВІДКРИТО"}</b><strong>${esc(n)}</strong>
+    ${secret ? `<small style="font-style:italic">«${esc(d)}»</small><span>${esc(reveal)}</span>` : `<span>${esc(d)}</span>`}
+    ${fresh.length > 1 ? `<small>і ще ${fresh.length - 1} — дивись у «Цілях»</small>` : ""}<small>натисни, щоб закрити</small></div>`;
+  o.onclick = () => o.remove(); document.body.append(o); setTimeout(() => o.remove(), 6000); confetti(secret ? 90 : 50);
+}
+const saveSeen = () => { try { localStorage.setItem("kurs.ach", JSON.stringify(achSeen)); } catch {} };
 function statusPanel() {
   const g = game();
   const stats = areas().map(a => ({ n: STAT_NAMES[a.id] || a.name, v: 1 + Math.floor((g.byArea[a.id] || 0) / 60) }));
@@ -954,9 +1010,19 @@ function viewGoals() {
     <div class="bar"><span style="width:${p}%"></span></div>
     <ul class="steps">${(g.steps || []).map((s, i) => `<li class="${s.done ? "done" : ""}"><button class="check ${s.done ? "on" : ""}" data-act="step" data-id="${esc(g.id)}" data-i="${i}" aria-pressed="${!!s.done}" aria-label="Крок: ${esc(s.t)}">${s.done ? CHECK : ""}</button><span>${esc(s.t)}</span></li>`).join("")}</ul>
   </section>`; }).join("") || `<section class="panel"><p class="muted">Цілей поки немає.</p></section>`}
-  <section class="panel span"><div class="panel-head"><h2>Досягнення</h2><span class="eyebrow">${achievements(game()).filter(a => a[2]).length}/${achievements(game()).length}</span></div>
+  ${achPanel()}`;
+}
+function achPanel() {
+  const all = achievements(game()), open = all.filter(a => !a[3]), sec = all.filter(a => a[3]);
+  const card = ([n, d, ok, secret, reveal]) => secret
+    ? `<div class="secret ${ok ? "got" : "locked"}"><b>${ok ? "✦ " + esc(n) : "? ? ?"}</b><small>${ok ? esc(reveal) : "«" + esc(d) + "»"}</small></div>`
+    : `<div class="${ok ? "got" : "locked"}"><b>${ok ? "★ " : ""}${esc(n)}</b><small>${esc(d)}</small></div>`;
+  return `<section class="panel span"><div class="panel-head"><h2>Досягнення</h2><span class="eyebrow num">${open.filter(a => a[2]).length}/${open.length} · таємних ${sec.filter(a => a[2]).length}/${sec.length}</span></div>
     <p class="muted" style="margin:0">Досвід: звичка 10 + хвилини/3, щоденний квест +${XP.quest}, задача +20 (важлива +40), крок цілі +${XP.step}.</p>
-    <div class="ach">${achievements(game()).map(([n, d, ok]) => `<div class="${ok ? "got" : "locked"}"><b>${ok ? "★ " : ""}${esc(n)}</b><small>${esc(d)}</small></div>`).join("")}</div></section>`;
+    <div class="ach">${[...open.filter(a => a[2]), ...open.filter(a => !a[2])].map(card).join("")}</div>
+    <h2 style="font-size:16px;margin-top:6px">Таємні</h2>
+    <p class="muted" style="margin:0">Умова схована в загадці. Відгадаєш — відкриєш.</p>
+    <div class="ach">${sec.map(card).join("")}</div></section>`;
 }
 
 function viewSetup() {
@@ -1089,6 +1155,7 @@ function render() {
   lastRoute = r;
   afterRender(r, entering);
   checkLevelUp();
+  checkAchievements();
 }
 
 
@@ -1767,7 +1834,7 @@ render();
   db.collection("days").onSnapshot(snap => {
     const m = {}; snap.docs.forEach(d => { m[d.id] = d.data(); }); S.days = m; got("days", snap);
   }, fail);
-  db.collection("journal").onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { m[d.id] = d.data(); }); S.journal = m; render(); }, fail);
+  db.collection("journal").onSnapshot(snap => { const m = {}; snap.docs.forEach(d => { m[d.id] = d.data(); }); S.journal = m; got("journal", snap); }, fail);
   db.doc("settings/main").onSnapshot(snap => { S.settings = snap.exists ? snap.data() : null; got("settings", snap); }, fail);
 })();
 </script>

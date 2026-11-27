@@ -58,6 +58,7 @@ The Today tab has one box where the user types a request or a question. The page
 
 ## English practice and principle of the day
 
+- Tab «Розум»: «Логіка дня» (a new, slightly harder logic-gate circuit each day; hidden gate values, fewer checks = more stars), «Підтримка» (a supportive chat in the style of a counselling psychologist on the user's own Claude account; not saved anywhere unless the user presses «Записати висновок у щоденник», which appends a short summary to today's journal; always shows Lifeline Ukraine 7333 and 112), quick self-help techniques and the meditation timer.
 - «Англійська з Claude» on the Today tab: a short spoken or typed role-play (interview, technical chat, small talk) on the user's own Claude account. Replies are read aloud where `tts` works; the user can dictate where `dictation` works. «Завершити» asks for feedback (mistakes, good phrases, focus, rough level), saves it to `notes` and ticks the first active habit whose title mentions «англ»/«english».
 - «Принцип дня»: a rotating short principle (own paraphrases inspired by Carnegie and Greene). Its button ticks the first active habit whose title mentions «принцип», so add such a weekly habit if the user reads those books.
 

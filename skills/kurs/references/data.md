@@ -40,4 +40,6 @@ Optional internship map. `{order: number, title, when: string, why: string, item
 
 `{title, author, status: "read"|"reading"|"want", theme, rating: 1-5|null, idea, finishedAt: ISO|null, before: bool}`. `before: true` marks books read before the tracker (no XP).
 
+`settings/main.logic`: {level, last (YYYY-MM-DD), stars, solved} — progress of «Логіка дня» on the «Розум» tab. One level a day: level n is a seeded logic circuit (more inputs, gates, outputs and harder gates as n grows); solving it moves `level` on, sets `last` to today and ticks the first active habit whose title mentions «логік». Don't edit it by hand.
+
 `settings/main.birthdays`: [{name, md: "MM-DD"}] — edited in Setup as lines «Ім'я — ДД.ММ»; shown in «Чий сьогодні день» (today + next 7 days) and as 🎂 in the calendar. The page also has a fixed list of special days (π day, Programmer's Day, Student's Day…).

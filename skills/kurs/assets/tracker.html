@@ -100,7 +100,7 @@
 
   nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line);
     padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
-  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+  nav.tabs div { max-width: 680px; margin: 0 auto; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 2px; }
   nav.tabs a { text-decoration: none; color: var(--muted); display: grid; justify-items: center; gap: 2px; font-size: 11.5px; padding: 6px 2px; border-radius: 10px; }
   nav.tabs a svg { width: 22px; height: 22px; }
   nav.tabs a[aria-current="page"] { color: var(--accent); background: var(--soft); font-weight: 600; }
@@ -374,6 +374,21 @@
   .msg.ai { background: var(--soft); justify-self: start; }
   .msg.me { background: var(--accent); color: var(--accent-ink); justify-self: end; }
   .msg.fb { max-width: 100%; border: 1px solid var(--brass); background: var(--surface); }
+  .lg-ins { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lg-in { display: grid; justify-items: center; gap: 2px; min-width: 54px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 13px var(--mono); cursor: pointer; }
+  .lg-in b { font-size: 20px; }
+  .lg-in[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .lg-gates { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .lg-gates li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 7px 10px; border-radius: 10px; background: var(--soft); border: 1px solid transparent; }
+  .lg-gates li.out { border-color: var(--brass); }
+  .lg-gates code, .lg-help code { font: 500 14px var(--mono); }
+  .lg-need { font-size: 13px; color: var(--brass); }
+  .lg-v { margin-left: auto; font: 600 15px var(--mono); }
+  .lg-help { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+  .lg-msg { margin: 0; font-weight: 600; }
+  .sos { display: grid; gap: 2px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--brass); font-size: 14px; }
+  .sos a { color: var(--accent); font-weight: 700; }
+  a.btn { text-decoration: none; display: inline-flex; align-items: center; }
   .cmd { display: grid; gap: 8px; }
   .cmd textarea { min-height: 56px; }
   /* Wide screens: a second column; the status window and section headers span both */
@@ -438,6 +453,7 @@
   <a href="#tasks" data-r="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/></svg>Задачі</a>
   <a href="#habits" data-r="habits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Звички</a>
   <a href="#goals" data-r="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Цілі</a>
+  <a href="#mind" data-r="mind"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>Розум</a>
   <a href="#library" data-r="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h4v18H6a2 2 0 0 1-2-2z"/><path d="M10 3h4v18h-4zM15 4.5l3.8-1 3 16.4-3.8 1z"/></svg>Книги</a>
   <a href="#cal" data-r="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Місяць</a>
   <a href="#setup" data-r="setup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Профіль</a>
@@ -612,6 +628,7 @@ function achievements(g) {
     ["Гросмейстерська витримка", "30 днів шахів", habitDays(/шах/i) >= 30],
     ["Свіжа сторінка", "Дочитати книгу, відкриту в трекері", S.books.some(b => b.status === "read" && !b.before)],
     ["Голос", "7 записів у щоденнику", Object.values(S.journal).filter(j => (j.text || "").trim()).length >= 7],
+    ["Логік", "10 рівнів «Логіки дня»", logicState().solved >= 10], ["Інженер схем", "30 рівнів «Логіки дня»", logicState().solved >= 30],
     // secret: [name, riddle, ok, true, what it was]
     ["Полярна зірка", "Хто знає, куди йде, тому світить одна зірка.", !!(set().vision && set().mainQuest), true, "Задати «Куди я йду» і головний квест"],
     ["Повний місяць", "Кругле буває не лише на небі.", Object.keys(S.days).some(k => !isLight(k) && dailyHabits().length && dailyHabits().every(h => doneOn(k, h.id))), true, "Виконати 100% звичок за день"],
@@ -711,7 +728,7 @@ function saveSettings(patch) {
 }
 
 // ---------- rendering ----------
-const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", library: "Бібліотека", cal: "Календар", setup: "Налаштування" };
+const TITLES = { today: "Сьогодні", tasks: "Задачі", habits: "Звички", goals: "Цілі", mind: "Розум", library: "Бібліотека", cal: "Календар", setup: "Налаштування" };
 const route = () => (TITLES[location.hash.slice(1)] ? location.hash.slice(1) : "today");
 
 function areaChip(id) { const a = area(id); return `<span class="meta"><span class="dot" style="background:${esc(a.color)}"></span>${esc(a.name)}</span>`; }
@@ -840,7 +857,7 @@ function heroPanel() {
     <p class="muted" style="margin:0;font-size:14px">${esc(cur[2])}${next ? ` Наступна форма — «${esc(next[1])}» на ${next[0]} рівні.` : ""}</p>
     <blockquote class="quote">«${esc(text)}»<small>${esc(who)}</small></blockquote></section>`;
 }
-const TODAY_PANELS = [["occ", "Чий сьогодні день"], ["sched", "Пари й вільні вікна"], ["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"]];
+const TODAY_PANELS = [["occ", "Чий сьогодні день"], ["sched", "Пари й вільні вікна"], ["hero", "Куди я йду"], ["status", "Статус і рівень"], ["main", "Головний квест"], ["wins", "Мої перемоги"], ["map", "Карта стажування"], ["focus", "Фокус"], ["med", "Медитація"], ["principle", "Принцип дня"], ["journal", "Щоденник"], ["english", "Англійська з Claude"], ["logic", "Логіка дня"]];
 const showP = k => !(set().hideToday || []).includes(k);
 let diceNow = "";
 function rollDice() {
@@ -883,6 +900,7 @@ function viewToday() {
   ${showP("hero") ? heroPanel() : ""}
   ${showP("status") ? statusPanel() : ""}
   ${showP("main") ? mainQuestPanel() : ""}
+  ${showP("logic") ? logicMini() : ""}
   ${penaltyToday() ? `<section class="panel penalty"><div class="panel-head"><h2>Штрафний квест</h2><span class="eyebrow">+${XP.penalty} досвіду</span></div>
     <p style="margin:0">Учора щоденний квест не закрито. Поверни собі темп: 20 хвилин швидкої ходьби або 3 підходи по 10 віджимань.</p>
     <div class="list">${habitRow({ id: "penalty", title: "20 хв ходьби або 30 віджимань", area: "body" })}</div></section>` : ""}
@@ -1188,13 +1206,16 @@ function render() {
   const qt = $("#qtTitle"), keep = qt ? qt.value : "", hadFocus = document.activeElement === qt;
   const cm = $("#cmdText"), cmdKeep = cm ? cm.value : "", cmdFocus = document.activeElement === cm;
   const jt = $("#jText"), jFocus = document.activeElement === jt ? [jt.selectionStart, jt.selectionEnd] : null;
+  const careFocus = document.activeElement?.id === "careText";
   const coachBusy = $("#coachBox")?.dataset.busy === "1" ? $("#coachBox").innerHTML : null;
-  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, library: viewLibrary, cal: viewCalendar, setup: viewSetup }[r]();
+  view.innerHTML = { today: viewToday, tasks: viewTasks, habits: viewHabits, goals: viewGoals, mind: viewMind, library: viewLibrary, cal: viewCalendar, setup: viewSetup }[r]();
   view.className = r === "habits" ? "" : "cols";
   if (r === "tasks" && lastRoute === "tasks") { $("#qtTitle").value = keep; if (hadFocus) $("#qtTitle").focus(); }
   if (r === "today" && lastRoute === "today" && $("#cmdText")) { $("#cmdText").value = cmdKeep; if (cmdFocus) $("#cmdText").focus(); }
   if (coachBusy && $("#coachBox")) { $("#coachBox").innerHTML = coachBusy; $("#coachBox").dataset.busy = "1"; }
   if (jFocus && $("#jText")) { $("#jText").focus(); $("#jText").setSelectionRange(...jFocus); }
+  if (careFocus && $("#careText")) { const t = $("#careText"); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+  const cl = $("#careLog"); if (cl) cl.scrollTop = cl.scrollHeight;
   const entering = r !== lastRoute;
   lastRoute = r;
   afterRender(r, entering);
@@ -1899,6 +1920,131 @@ async function engInit() {
   }
 }
 
+// ---------- «Розум»: daily logic circuit + support ----------
+const LOGIC_OPS = { AND: (a, b) => a & b, OR: (a, b) => a | b, XOR: (a, b) => a ^ b, NAND: (a, b) => 1 - (a & b), NOR: (a, b) => 1 - (a | b), XNOR: (a, b) => 1 - (a ^ b), NOT: a => 1 - a };
+const LOGIC_HELP = { AND: "1, якщо обидва входи 1", OR: "1, якщо хоч один вхід 1", XOR: "1, якщо рівно один вхід 1", NOT: "перевертає: 0 → 1, 1 → 0", NAND: "NOT від AND", NOR: "NOT від OR", XNOR: "1, якщо входи однакові" };
+const seeded = s => () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const logicEval = (c, ins) => { const v = { ...ins }; c.gates.forEach(g => { v[g.id] = g.op === "NOT" ? LOGIC_OPS.NOT(v[g.a]) : LOGIC_OPS[g.op](v[g.a], v[g.b]); }); return v; };
+// Level n gives the same circuit on every device; each level adds inputs, gates, outputs or harder gate types.
+function makeCircuit(n) {
+  for (let salt = 0; ; salt++) {
+    const r = seeded(n * 7919 + salt * 104729 + 17), pick = a => a[Math.floor(r() * a.length)];
+    const nIn = Math.min(2 + Math.floor((n + 1) / 3), 8), nG = Math.min(1 + Math.ceil(n * 0.8), 18), nOut = n < 6 ? 1 : n < 15 ? 2 : 3;
+    const ops = ["AND", "OR", "NOT", ...(n >= 4 ? ["XOR"] : []), ...(n >= 8 ? ["NAND", "NOR"] : []), ...(n >= 12 ? ["XNOR"] : [])];
+    const inputs = "ABCDEFGH".slice(0, nIn).split(""), raw = [], taken = new Set();
+    for (let i = 0; i < nG; i++) {
+      const sig = [...inputs, ...raw.map(g => g.id)], recent = sig.slice(-Math.max(3, nIn)), fresh = sig.filter(x => !taken.has(x));
+      const op = pick(ops), a = fresh.length && r() < .5 ? pick(fresh) : r() < .6 ? pick(recent) : pick(sig); // unused signals first, so the whole circuit matters
+      let b = fresh.length > 1 && r() < .5 ? pick(fresh) : pick(sig); if (b === a) b = sig[(sig.indexOf(a) + 1) % sig.length];
+      raw.push({ id: "t" + i, op, a, b: op === "NOT" ? null : b }); taken.add(a); if (op !== "NOT") taken.add(b);
+    }
+    // keep only what feeds the outputs, then renumber g1, g2, ...
+    const outsRaw = raw.slice(-nOut).map(g => g.id), need = new Set(outsRaw);
+    for (let i = raw.length - 1; i >= 0; i--) if (need.has(raw[i].id)) { need.add(raw[i].a); if (raw[i].b) need.add(raw[i].b); }
+    const kept = raw.filter(g => need.has(g.id)), ren = {}; kept.forEach((g, i) => { ren[g.id] = "g" + (i + 1); });
+    const nm = x => ren[x] || x, used = inputs.filter(x => need.has(x));
+    if (used.length < 2) continue;
+    const c = { inputs: used, gates: kept.map(g => ({ id: nm(g.id), op: g.op, a: nm(g.a), b: g.b && nm(g.b) })), outs: outsRaw.map(nm) };
+    const z = logicEval(c, Object.fromEntries(used.map(x => [x, 0])));
+    for (let k = 0; k < 24; k++) { // a target the all-zero start does not already meet
+      const v = logicEval(c, Object.fromEntries(used.map(x => [x, r() < .5 ? 1 : 0])));
+      if (c.outs.some(o => v[o] !== z[o])) return { ...c, target: Object.fromEntries(c.outs.map(o => [o, v[o]])) };
+    }
+  }
+}
+const logic = { lvl: 0, vals: {}, tries: 0, hint: false, msg: "", c: null };
+const logicState = () => { const p = set().logic || {}; return { level: p.level || 1, last: p.last || "", stars: p.stars || 0, solved: p.solved || 0 }; };
+function logicCur() { const L = logicState().level; if (logic.lvl !== L) Object.assign(logic, { lvl: L, vals: {}, tries: 0, hint: false, msg: "", c: makeCircuit(L) }); return logic; }
+const logicHabit = () => S.habits.find(h => h.active !== false && /логік/i.test(h.title || ""));
+function logicPanel() {
+  const p = logicState();
+  if (p.last === TODAY()) return `<section class="panel span"><div class="panel-head"><h2>Логіка дня</h2><span class="quest-done">ПРОЙДЕНО</span></div>
+    <p style="margin:0">Рівень ${p.level - 1} пройдено. Рівень ${p.level} відкриється завтра, і він буде трохи складніший.</p>
+    <p class="muted" style="margin:0">Пройдено рівнів: ${p.solved} · зірок: ${p.stars}</p></section>`;
+  const g = logicCur(), c = g.c, vals = Object.fromEntries(c.inputs.map(x => [x, g.vals[x] || 0])), v = logicEval(c, vals), ops = [...new Set(c.gates.map(x => x.op))];
+  return `<section class="panel span"><div class="panel-head"><h2>Логіка дня · рівень ${p.level}</h2><span class="eyebrow num">★ ${p.stars}</span></div>
+    <p class="muted" style="margin:0">Перемкни входи так, щоб виходи стали такими, як треба. Значення всередині схеми приховані: розв'язуй головою, а не перебором. Що менше перевірок, то більше зірок.</p>
+    <div class="lg-ins" role="group" aria-label="Входи">${c.inputs.map(x => `<button type="button" class="lg-in" data-act="logicIn" data-k="${x}" aria-pressed="${!!vals[x]}" aria-label="Вхід ${x}, зараз ${vals[x]}"><span>${x}</span><b class="num">${vals[x]}</b></button>`).join("")}</div>
+    <ol class="lg-gates">${c.gates.map(x => { const o = c.outs.indexOf(x.id); return `<li class="${o >= 0 ? "out" : ""}"><code>${x.id} = ${x.op === "NOT" ? `NOT ${x.a}` : `${x.a} ${x.op} ${x.b}`}</code>${o >= 0 ? `<span class="lg-need">вихід${c.outs.length > 1 ? " " + (o + 1) : ""} → треба <b>${c.target[x.id]}</b></span>` : ""}<b class="lg-v">${g.hint ? v[x.id] : "?"}</b></li>`; }).join("")}</ol>
+    <details><summary>Що означають гейти</summary><ul class="lg-help">${ops.map(o => `<li><code>${o}</code> — ${LOGIC_HELP[o]}</li>`).join("")}</ul></details>
+    ${g.msg ? `<p class="lg-msg" aria-live="polite">${esc(g.msg)}</p>` : ""}
+    <div class="actions"><button class="btn primary" type="button" data-act="logicCheck">Перевірити</button>${g.hint ? "" : `<button class="btn ghost" type="button" data-act="logicHint">Підказка: показати значення (макс. 1 ★)</button>`}</div></section>`;
+}
+function logicCheck() {
+  const p = logicState(), g = logicCur(), c = g.c, v = logicEval(c, Object.fromEntries(c.inputs.map(x => [x, g.vals[x] || 0])));
+  g.tries++;
+  const wrong = c.outs.filter(o => v[o] !== c.target[o]);
+  if (wrong.length) { g.msg = `Ще ні: ${wrong.map(o => `${o} = ${v[o]}, а треба ${c.target[o]}`).join("; ")}. Перевірок: ${g.tries}.`; render(); return; }
+  const stars = g.hint ? 1 : g.tries === 1 ? 3 : g.tries <= 3 ? 2 : 1;
+  saveSettings({ logic: { level: p.level + 1, last: TODAY(), stars: p.stars + stars, solved: p.solved + 1 } });
+  toast(`Рівень ${p.level} пройдено: ${"★".repeat(stars)}`); confetti(40);
+  const h = logicHabit(); if (h && !doneOn(TODAY(), h.id)) toggleHabit(h.id);
+}
+function logicMini() {
+  const p = logicState(), ok = p.last === TODAY();
+  return `<section class="panel"><div class="panel-head"><h2>Логіка дня</h2>${ok ? `<span class="quest-done">ПРОЙДЕНО</span>` : `<span class="eyebrow">рівень ${p.level} · 5 хв</span>`}</div>
+    <p class="muted" style="margin:0">${ok ? "Сьогоднішню схему розв'язано. Новий рівень завтра." : "Нова логічна схема: підбери входи, щоб отримати потрібний вихід. Щодня трохи складніше."}</p>
+    ${ok ? "" : `<div class="actions"><a class="btn primary" href="#mind">Розв'язати</a></div>`}</section>`;
+}
+// Support chat: lives only in memory; the person can save a short summary to today's journal.
+const care = { turns: [], busy: false, ctl: null, partial: "", draft: "" };
+const CARE_QUICK = ["Мені тривожно", "Не можу зібратися", "Думаю про одну людину", "Просто погано", "Хочу розібрати думку"];
+function careSystem() {
+  const who = [set().name, set().about].filter(Boolean).join(", ") || "студент";
+  return `Ти — теплий і уважний помічник у стилі психолога-консультанта (підходи КПТ і ACT). Співрозмовник: ${who}. Пиши українською, просто й по-людськи, 2–5 коротких речень, без списків і заголовків.
+Спершу назви й визнай почуття, потім дай одне м'яке запитання АБО одну маленьку дію на зараз (дихання, назвати думку й перевірити її фактами, крок на 10 хвилин, написати чи подзвонити близькій людині, пройтися).
+Не став діагнозів, не обіцяй, як поведуться інші люди, не моралізуй і не тисни. Ти не заміна живому психологу: якщо важкий стан триває довго, м'яко нагадай, що з фахівцем легше і що є анонімні текстові формати.
+Якщо людина пише про думки про смерть, самоушкодження чи що не хоче жити — спокійно й прямо спитай, чи вона зараз у безпеці, дай номер Lifeline Ukraine 7333 (цілодобово, безкоштовно, анонімно) і 112 та порадь просто зараз написати комусь живому.`;
+}
+function carePanel() {
+  const log = care.turns.slice(1).map(t => `<div class="msg ${t.role === "user" ? "me" : "ai"}">${esc(t.content)}</div>`).join("") + (care.busy ? `<div class="msg ai" id="carePartial">${esc(care.partial || "…")}</div>` : "");
+  return `<section class="panel span"><div class="panel-head"><h2>Підтримка</h2><span class="eyebrow">помічник · не лікар</span></div>
+    <div class="sos"><b>Якщо зовсім важко — просто зараз</b><span>Lifeline Ukraine <a href="tel:7333">7333</a>: цілодобово, безкоштовно, анонімно · екстрено <a href="tel:112">112</a></span></div>
+    ${sample ? `<p class="muted" style="margin:0">Тут можна виговоритись і розкласти думки по поличках. Розмова ніде не зберігається; якщо хочеш, наприкінці запиши висновок у щоденник.</p>
+    <div class="moods" role="group" aria-label="З чого почати">${CARE_QUICK.map(q => `<button type="button" class="chip-btn" data-act="careQuick" data-q="${esc(q)}" ${care.busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>
+    <div id="careLog" class="englog" aria-live="polite">${log || `<p class="muted">Напиши, що зараз відчуваєш. Можна одним словом.</p>`}</div>
+    <textarea id="careText" rows="2" placeholder="Що в тебе на душі… (Enter — надіслати)" aria-label="Повідомлення помічнику">${esc(care.draft)}</textarea>
+    <div class="actions"><button class="btn primary" type="button" data-act="careSend" ${care.busy ? "disabled" : ""}>Надіслати</button>${care.turns.length > 2 ? `<button class="btn ghost" type="button" data-act="careSave" ${care.busy ? "disabled" : ""}>Записати висновок у щоденник</button><button class="btn ghost" type="button" data-act="careReset">Почати заново</button>` : ""}</div>`
+    : `<p class="muted" style="margin:0">Помічник запрацює, коли сторінка відкрита на claude.ai у твоєму акаунті. А поки є техніки нижче.</p>`}</section>`;
+}
+async function careSend(text) {
+  text = String(text ?? care.draft).trim(); if (!text || !sample || care.busy) return;
+  if (!care.turns.length) care.turns = [{ role: "user", content: careSystem() + "\n\nДалі пише людина. Відповідай лише на її повідомлення." }];
+  care.draft = ""; care.turns.push({ role: "user", content: text }); care.busy = true; care.partial = ""; care.ctl = new AbortController(); render();
+  try {
+    const { text: a } = await sample(care.turns, { cache: false, signal: care.ctl.signal, onText: ({ text: t }) => { care.partial = t; const el = $("#carePartial"); if (el) el.textContent = t; const l = $("#careLog"); if (l) l.scrollTop = l.scrollHeight; } });
+    care.turns.push({ role: "assistant", content: a });
+  } catch (e) {
+    care.turns.pop(); care.draft = text;
+    if (e.code === "not_granted" || e.code === "sampling_disabled") sample = null;
+    else if (e.code !== "cancelled") toast(e.code === "rate_limited" ? "Забагато запитів. Спробуй за хвилину." : "Не вдалося отримати відповідь. Спробуй ще раз.");
+  }
+  care.busy = false; render();
+}
+async function careSave() {
+  if (!sample || care.busy || care.turns.length < 3) return;
+  care.busy = true; render();
+  try {
+    const dialog = care.turns.slice(1).map(t => (t.role === "user" ? "Я: " : "Помічник: ") + t.content).join("\n");
+    const { text } = await sample(`Ось моя розмова з помічником. Підсумуй її 2–3 реченнями від першої особи («я»): що я відчував, що зрозумів, один маленький крок. Без вступу.\n\n${dialog}`, { cache: false });
+    const date = TODAY(), e = S.journal[date] || {}, body = [(e.text || "").trim(), "Після розмови: " + text.trim()].filter(Boolean).join("\n\n");
+    const doc = { date, text: body, mood: e.mood ?? null, at: new Date().toISOString() };
+    S.journal = { ...S.journal, [date]: doc };
+    write("journal/" + date, () => db.doc("journal/" + date).set(doc));
+    toast("Висновок записано в щоденник");
+  } catch (e) { toast("Не вдалося підсумувати. Спробуй ще раз."); }
+  care.busy = false; render();
+}
+function selfHelpPanel() {
+  const it = (t, d, open) => `<details${open ? " open" : ""}><summary>${t}</summary><p class="muted" style="margin:6px 0 0">${d}</p></details>`;
+  return `<section class="panel"><div class="panel-head"><h2>Швидка допомога собі</h2><span class="eyebrow">2–5 хв</span></div>
+    ${it("Заземлення 5-4-3-2-1", "Назви 5 речей, які бачиш, 4 — які чуєш, 3 — яких торкаєшся, 2 запахи і 1 смак. Це повертає з думок у «тут і зараз».", true)}
+    ${it("Розібрати думку", "1) Яка думка найбільше болить? 2) Які факти за неї і проти? 3) Що б ти сказав другові з такою думкою? 4) Яка думка чесніша й добріша до тебе?")}
+    ${it("Коли накриває ввечері", "Не вирішуй важливе вночі: спершу сон, рішення — вранці. Вмийся холодною водою, випий води й напиши одне повідомлення живій людині.")}
+    ${it("Один маленький крок", "Обери найменшу дію на 5 хвилин: застелити ліжко, вийти на вулицю, відповісти на одне повідомлення. Рух повертає відчуття, що ти керуєш днем.")}</section>`;
+}
+const viewMind = () => `${logicPanel()}${carePanel()}${selfHelpPanel()}${medPanel()}`;
+
 // ---------- events ----------
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
@@ -1941,6 +2087,13 @@ document.addEventListener("click", e => {
   if (act === "delArea") { const l = [...areas()]; l.splice(Number(b.dataset.i), 1); saveSettings({ areas: l }); }
   if (act === "advice") coach("");
   if (act === "eng") openEnglish();
+  if (act === "logicIn") { const g = logicCur(), k = b.dataset.k; g.vals[k] = g.vals[k] ? 0 : 1; g.msg = ""; render(); }
+  if (act === "logicCheck") logicCheck();
+  if (act === "logicHint") { logicCur().hint = true; render(); }
+  if (act === "careQuick") careSend(b.dataset.q);
+  if (act === "careSend") careSend();
+  if (act === "careSave") careSave();
+  if (act === "careReset") { care.ctl?.abort(); Object.assign(care, { turns: [], busy: false, partial: "", draft: "" }); render(); }
   if (act === "skin") saveSettings({ skin: b.dataset.skin });
   if (act === "focus") focusStart(Number(b.dataset.min));
   if (act === "focusStop") focusStop(false);
@@ -1983,19 +2136,20 @@ document.addEventListener("submit", e => {
   write("tasks/" + ref.id, () => ref.set({ title, area: "study", due: null, priority: "normal", notes: "", done: false, createdAt: new Date().toISOString() }));
   toast("Задачу додано");
 });
-document.addEventListener("input", e => { if (e.target.id === "jText") { const dt = e.target.dataset.date; jDraft[dt] = { ...jDraft[dt], text: e.target.value }; } });
+document.addEventListener("input", e => { if (e.target.id === "careText") care.draft = e.target.value; if (e.target.id === "jText") { const dt = e.target.dataset.date; jDraft[dt] = { ...jDraft[dt], text: e.target.value }; } });
 document.addEventListener("toggle", e => { const id = e.target.dataset && e.target.dataset.rm; if (id) { if (e.target.open) rmOpen.add(id); else rmOpen.delete(id); } }, true);
 addEventListener("hashchange", render);
-// Shortcuts: 1-6 switch tabs, N adds a task, F starts 25 min of focus (never while typing or in a dialog).
+// Shortcuts: 1-8 switch tabs, N adds a task, F starts 25 min of focus (never while typing or in a dialog).
 document.addEventListener("keydown", e => {
   if (med.el) { if (e.key === "Escape") { medStop(false); e.preventDefault(); } return; }
   if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest("input, textarea, select, dialog")) return;
-  const tabs = ["today", "tasks", "habits", "goals", "library", "cal", "setup"], i = "1234567".indexOf(e.key);
+  const tabs = ["today", "tasks", "habits", "goals", "mind", "library", "cal", "setup"], i = "12345678".indexOf(e.key);
   if (i >= 0) { location.hash = "#" + tabs[i]; e.preventDefault(); }
   else if (e.key === "n" || e.key === "т") { taskDialog(null); e.preventDefault(); }
   else if ((e.key === "f" || e.key === "а") && !(focus.endAt > Date.now())) { focusStart(25); e.preventDefault(); }
 });
 document.addEventListener("keydown", e => { if (e.target.id === "engText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); engSend(); } });
+document.addEventListener("keydown", e => { if (e.target.id === "careText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); care.draft = e.target.value; careSend(); } });
 document.addEventListener("keydown", e => { if (e.target.id === "cmdText" && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#askBox").requestSubmit(); } });
 
 // ---------- boot ----------
